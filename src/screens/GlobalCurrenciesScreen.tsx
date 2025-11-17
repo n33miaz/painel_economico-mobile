@@ -9,7 +9,7 @@ import {
   Button,
 } from "react-native";
 
-import { colors } from "../theme/colors";
+import { colors } from "../theme/colors"; // Importando nosso tema
 import useApiData from "../hooks/useApiData";
 import { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
@@ -31,7 +31,7 @@ export default function GlobalCurrenciesScreen() {
     error,
     fetchData: refreshData,
   } = useApiData<CurrencyData>(
-    "https://economia.awesomeapi.com.br/json/all",
+    "/all",
     "@global_currencies",
     isCurrencyData,
     10 * 60 * 1000,
@@ -58,8 +58,8 @@ export default function GlobalCurrenciesScreen() {
   if (loading && !isRefreshing) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Carregando moedas globais...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Carregando moedas globais...</Text>
       </View>
     );
   }
@@ -70,7 +70,11 @@ export default function GlobalCurrenciesScreen() {
         <Text style={styles.errorText}>
           Ocorreu um erro ao carregar os dados.
         </Text>
-        <Button title="Tentar Novamente" onPress={refreshData} />
+        <Button
+          title="Tentar Novamente"
+          onPress={refreshData}
+          color={colors.primary}
+        />
       </View>
     );
   }
@@ -83,14 +87,19 @@ export default function GlobalCurrenciesScreen() {
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name.split("/")[0]}
-            value={Number(item.buy)}
-            variation={Number(item.variation)}
+            value={item.buy}
+            variation={item.variation}
             symbol={currencySymbols[item.code] || "$"}
             onPress={() => handleOpenModal(item)}
           />
         )}
         onRefresh={handleRefresh}
         refreshing={isRefreshing}
+        ListEmptyComponent={
+          <View style={styles.centered}>
+            <Text>Nenhuma moeda global encontrada.</Text>
+          </View>
+        }
       />
 
       <Modal
@@ -103,18 +112,22 @@ export default function GlobalCurrenciesScreen() {
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>{selectedCurrency?.name}</Text>
             <Text style={styles.modalText}>
-              Compra (em BRL): R$ {Number(selectedCurrency?.buy).toFixed(2)}
+              Compra (em BRL): R$ {selectedCurrency?.buy.toFixed(2)}
             </Text>
             <Text style={styles.modalText}>
               Venda (em BRL): R${" "}
               {selectedCurrency?.sell
-                ? Number(selectedCurrency.sell).toFixed(2)
+                ? selectedCurrency.sell.toFixed(2)
                 : "N/A"}
             </Text>
             <Text style={styles.modalText}>
-              Variação: {Number(selectedCurrency?.variation).toFixed(2)}%
+              Variação: {selectedCurrency?.variation.toFixed(2)}%
             </Text>
-            <Button title="Fechar" onPress={() => setModalVisible(false)} />
+            <Button
+              title="Fechar"
+              onPress={() => setModalVisible(false)}
+              color={colors.primary}
+            />
           </View>
         </View>
       </Modal>
@@ -132,12 +145,17 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingTop: 16,
+    paddingTop: 8, // Diminuí um pouco o padding para o card não ficar colado no topo
     backgroundColor: colors.background,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: colors.textSecondary,
   },
   errorText: {
     fontSize: 18,
-    color: "red",
+    color: colors.danger,
     textAlign: "center",
     marginBottom: 10,
   },
@@ -145,11 +163,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: colors.transparent,
   },
   modalView: {
     margin: 20,
-    backgroundColor: "white",
+    backgroundColor: colors.cardBackground,
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -164,10 +182,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     fontWeight: "bold",
+    color: colors.textPrimary,
   },
   modalText: {
     marginBottom: 15,
     textAlign: "center",
     fontSize: 16,
+    color: colors.textSecondary,
   },
 });

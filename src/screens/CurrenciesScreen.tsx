@@ -21,7 +21,7 @@ export default function CurrenciesScreen() {
     error,
     fetchData: refreshCurrencies,
   } = useApiData<CurrencyData>(
-    "https://economia.awesomeapi.com.br/json/all",
+    "/all",
     "@currencies",
     isCurrencyData
   );
@@ -46,7 +46,7 @@ export default function CurrenciesScreen() {
   if (loading && !currencies) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Carregando dados...</Text>
       </View>
     );
@@ -57,7 +57,11 @@ export default function CurrenciesScreen() {
       <View style={styles.centered}>
         <Text style={styles.errorText}>Erro ao carregar os dados.</Text>
         <Text style={styles.errorText}>{error}</Text>
-        <Button title="Tentar Novamente" onPress={refreshCurrencies} />
+        <Button
+          title="Tentar Novamente"
+          onPress={refreshCurrencies}
+          color={colors.primary}
+        />
       </View>
     );
   }
@@ -66,12 +70,12 @@ export default function CurrenciesScreen() {
     <View style={styles.container}>
       <FlatList
         data={currencies || []}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => item.code}
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name}
-            value={Number(item.buy)}
-            variation={Number(item.variation)}
+            value={item.buy}
+            variation={item.variation}
             onPress={() => handleOpenModal(item)}
           />
         )}
@@ -94,18 +98,22 @@ export default function CurrenciesScreen() {
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>{selectedCurrency?.name}</Text>
             <Text style={styles.modalText}>
-              Compra: R$ {Number(selectedCurrency?.buy).toFixed(2)}
+              Compra: R$ {selectedCurrency?.buy.toFixed(2)}
             </Text>
             <Text style={styles.modalText}>
               Venda: R${" "}
               {selectedCurrency?.sell
-                ? Number(selectedCurrency.sell).toFixed(2)
+                ? selectedCurrency.sell.toFixed(2)
                 : "N/A"}
             </Text>
             <Text style={styles.modalText}>
-              Variação: {Number(selectedCurrency?.variation).toFixed(2)}%
+              Variação: {selectedCurrency?.variation.toFixed(2)}%
             </Text>
-            <Button title="Fechar" onPress={() => setModalVisible(false)} />
+            <Button
+              title="Fechar"
+              onPress={() => setModalVisible(false)}
+              color={colors.primary}
+            />
           </View>
         </View>
       </Modal>
