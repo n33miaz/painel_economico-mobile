@@ -16,6 +16,7 @@ import IndicatorCard from "../components/IndicatorCard";
 export default function CurrenciesScreen() {
   const [currencies, setCurrencies] = useState<CurrencyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyData | null>(
@@ -73,6 +74,12 @@ export default function CurrenciesScreen() {
     setModalVisible(true);
   }
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -86,6 +93,8 @@ export default function CurrenciesScreen() {
             onPress={() => handleOpenModal(item)}
           />
         )}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
 
       <Modal

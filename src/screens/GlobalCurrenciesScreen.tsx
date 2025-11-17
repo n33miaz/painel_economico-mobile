@@ -1,0 +1,1 @@
+const DESIRED_CURRENCIES = ["USD", "EUR", "JPY", "GBP", "CAD"];

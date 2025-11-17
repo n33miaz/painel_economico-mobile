@@ -18,8 +18,7 @@ export function isCurrencyData(item: any): item is CurrencyData {
     item &&
     typeof item.name === "string" &&
     typeof item.buy === "string" &&
-    typeof item.variation === "string" &&
-    item.codein !== "BRLT"
+    typeof item.variation === "string"
   );
 }
 

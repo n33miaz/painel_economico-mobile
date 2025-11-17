@@ -18,6 +18,7 @@ const DESIRED_INDEXES = ["IBOVESPA", "CDI", "SELIC"];
 export default function IndexesScreen() {
   const [indexes, setIndexes] = useState<IndexData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null);
@@ -72,6 +73,12 @@ export default function IndexesScreen() {
     setModalVisible(true);
   }
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
+
   return (
     <View style={styles.container}>
       <FlatList
@@ -85,6 +92,8 @@ export default function IndexesScreen() {
             onPress={() => handleOpenModal(item)}
           />
         )}
+        onRefresh={onRefresh}
+        refreshing={refreshing}
       />
 
       <Modal
