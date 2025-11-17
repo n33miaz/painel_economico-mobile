@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -8,69 +8,43 @@ import {
   Modal,
   Button,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import api, { IndexData, isIndexData } from "../services/api";
+import useApiData from "../hooks/useApiData";
+import { IndexData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 
 const DESIRED_INDEXES = ["IBOVESPA", "CDI", "SELIC"];
 
 export default function IndexesScreen() {
-  const [indexes, setIndexes] = useState<IndexData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: indexes,
+    loading,
+    error,
+    fetchData: refreshData,
+  } = useApiData<IndexData>(
+    "https://economia.awesomeapi.com.br/json/all",
+    "@indexes",
+    isIndexData,
+    10 * 60 * 1000, // 10 min de cache
+    (item) => DESIRED_INDEXES.includes(item.name)
+  );
 
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null);
 
-  async function fetchData() {
-    const STORAGE_KEY = "@indexes";
-    const CACHE_DURATION = 10 * 60 * 1000; // 10 min
-
-    try {
-      const cachedDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
-      if (cachedDataJSON) {
-        const { timestamp, data } = JSON.parse(cachedDataJSON);
-
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setIndexes(data);
-          setLoading(false);
-        }
-      }
-
-      const response = await api.get("/all");
-      const data = response.data;
-      const filteredData: IndexData[] = Object.values(data).filter(isIndexData);
-
-      setIndexes(filteredData);
-      const dataToCache = {
-        timestamp: Date.now(),
-        data: filteredData,
-      };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(dataToCache));
-    } catch (error) {
-      console.error("Erro ao buscar dados da API:", error);
-    } finally {
-      if (loading) setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const onRefresh = React.useCallback(async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    await refreshData();
     setRefreshing(false);
-  }, []);
+  }, [refreshData]);
 
   function handleOpenModal(item: IndexData) {
     setSelectedIndex(item);
     setModalVisible(true);
   }
 
-  if (loading) {
+  if (loading && !indexes) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#0000ff" />
@@ -79,10 +53,22 @@ export default function IndexesScreen() {
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>
+          Ocorreu um erro ao carregar os dados.
+        </Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Tentar Novamente" onPress={refreshData} />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
-        data={indexes}
+        data={indexes || []}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <IndicatorCard
@@ -94,6 +80,11 @@ export default function IndexesScreen() {
         )}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        ListEmptyComponent={
+          <View style={styles.centered}>
+            <Text>Nenhum índice encontrado.</Text>
+          </View>
+        }
       />
 
       <Modal
@@ -126,11 +117,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   container: {
     flex: 1,
-    paddingTop: 16,
     backgroundColor: "#f5f5f5",
+  },
+  errorText: {
+    color: "red",
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
   },
   centeredView: {
     flex: 1,
