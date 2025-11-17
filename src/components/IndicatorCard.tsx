@@ -6,6 +6,7 @@ interface IndicatorCardProps {
   name: string;
   value: number;
   variation: number;
+  symbol?: string;
   onPress: () => void;
 }
 
@@ -13,6 +14,7 @@ export default function IndicatorCard({
   name,
   value,
   variation,
+  symbol = "R$",
   onPress,
 }: IndicatorCardProps) {
   const isPositive = variation >= 0;
@@ -22,7 +24,9 @@ export default function IndicatorCard({
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View>
         <Text style={styles.cardTitle}>{name.split("/")[0]}</Text>
-        <Text style={styles.cardValue}>R$ {value.toFixed(2)}</Text>
+        <Text style={styles.cardValue}>
+          {symbol} {value.toFixed(2)}
+        </Text>
       </View>
       <View
         style={[styles.variationContainer, { backgroundColor: variationColor }]}

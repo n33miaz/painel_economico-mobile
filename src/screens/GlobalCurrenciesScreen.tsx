@@ -15,6 +15,14 @@ import IndicatorCard from "../components/IndicatorCard";
 
 const DESIRED_CURRENCIES = ["USD", "EUR", "JPY", "GBP", "CAD"];
 
+const currencySymbols: { [key: string]: string } = {
+  USD: "$",
+  EUR: "€",
+  JPY: "¥",
+  GBP: "£",
+  CAD: "$",
+};
+
 export default function GlobalCurrenciesScreen() {
   const [currencies, setCurrencies] = useState<CurrencyData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,10 +97,10 @@ export default function GlobalCurrenciesScreen() {
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <IndicatorCard
-            name={item.name}
-            // não mostrar "R$"
+            name={item.name.split("/")[0]}
             value={Number(item.buy)}
             variation={Number(item.variation)}
+            symbol={currencySymbols[(item as any).code] || "$"}
             onPress={() => handleOpenModal(item)}
           />
         )}
