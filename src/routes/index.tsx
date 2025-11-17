@@ -5,6 +5,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
 import CurrenciesScreen from "../screens/CurrenciesScreen";
+import GlobalCurrenciesScreen from "../screens/GlobalCurrenciesScreen";
 import IndexesScreen from "../screens/IndexesScreen";
 import NewsScreen from "../screens/NewsScreen";
 import AboutScreen from "../screens/AboutScreen";
@@ -28,7 +29,7 @@ function TabNavigator() {
         },
         tabBarActiveTintColor: "tomato",
         tabBarInactiveTintColor: "gray",
-        headerShown: false, 
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Moedas" component={CurrenciesScreen} />
@@ -43,8 +44,9 @@ function DrawerNavigator() {
       <Drawer.Screen
         name="Início"
         component={TabNavigator}
-        options={{ title: "Dashboard Principal" }}
+        options={{ title: "Dashboard Brasil" }}
       />
+      <Drawer.Screen name="Moedas Globais" component={GlobalCurrenciesScreen} />
       <Drawer.Screen name="Notícias" component={NewsScreen} />
       <Drawer.Screen name="Sobre" component={AboutScreen} />
     </Drawer.Navigator>

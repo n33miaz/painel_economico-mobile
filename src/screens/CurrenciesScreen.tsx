@@ -60,6 +60,17 @@ export default function CurrenciesScreen() {
     fetchData();
   }, []);
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
+
+  function handleOpenModal(item: CurrencyData) {
+    setSelectedCurrency(item);
+    setModalVisible(true);
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -68,17 +79,6 @@ export default function CurrenciesScreen() {
       </View>
     );
   }
-
-  function handleOpenModal(item: CurrencyData) {
-    setSelectedCurrency(item);
-    setModalVisible(true);
-  }
-
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  }, []);
 
   return (
     <View style={styles.container}>

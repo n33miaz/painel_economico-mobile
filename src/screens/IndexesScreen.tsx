@@ -59,6 +59,17 @@ export default function IndexesScreen() {
     fetchData();
   }, []);
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchData();
+    setRefreshing(false);
+  }, []);
+
+  function handleOpenModal(item: IndexData) {
+    setSelectedIndex(item);
+    setModalVisible(true);
+  }
+
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -67,17 +78,6 @@ export default function IndexesScreen() {
       </View>
     );
   }
-
-  function handleOpenModal(item: IndexData) {
-    setSelectedIndex(item);
-    setModalVisible(true);
-  }
-
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
-  }, []);
 
   return (
     <View style={styles.container}>
