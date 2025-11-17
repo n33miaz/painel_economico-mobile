@@ -9,6 +9,7 @@ import {
   Button,
 } from "react-native";
 
+import { colors } from "../theme/colors";
 import useApiData from "../hooks/useApiData";
 import { IndexData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
@@ -22,10 +23,10 @@ export default function IndexesScreen() {
     error,
     fetchData: refreshData,
   } = useApiData<IndexData>(
-    "https://economia.awesomeapi.com.br/json/all",
+    "/all",
     "@indexes",
     isIndexData,
-    10 * 60 * 1000, // 10 min de cache
+    10 * 60 * 1000,
     (item) => DESIRED_INDEXES.includes(item.name)
   );
 
@@ -47,20 +48,23 @@ export default function IndexesScreen() {
   if (loading && !indexes) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Carregando dados...</Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={styles.loadingText}>Carregando índices...</Text>
       </View>
     );
   }
 
-  if (error) {
+  if (error && !indexes) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>
           Ocorreu um erro ao carregar os dados.
         </Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <Button title="Tentar Novamente" onPress={refreshData} />
+        <Button
+          title="Tentar Novamente"
+          onPress={refreshData}
+          color={colors.primary}
+        />
       </View>
     );
   }
@@ -73,8 +77,9 @@ export default function IndexesScreen() {
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name}
-            value={Number(item.points) || Number(item.variation)}
-            variation={Number(item.variation)}
+            value={item.points || item.variation}
+            variation={item.variation}
+            symbol={item.name !== "IBOVESPA" ? "" : "pts"}
             onPress={() => handleOpenModal(item)}
           />
         )}
@@ -82,7 +87,7 @@ export default function IndexesScreen() {
         refreshing={refreshing}
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text>Nenhum índice encontrado.</Text>
+            <Text style={styles.loadingText}>Nenhum índice encontrado.</Text>
           </View>
         }
       />
@@ -96,15 +101,19 @@ export default function IndexesScreen() {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <Text style={styles.modalTitle}>{selectedIndex?.name}</Text>
-            {selectedIndex?.points && (
+            {selectedIndex?.points !== undefined && (
               <Text style={styles.modalText}>
-                Pontos: {Number(selectedIndex?.points).toFixed(2)}
+                Pontos: {selectedIndex?.points.toFixed(2)}
               </Text>
             )}
             <Text style={styles.modalText}>
-              Variação: {Number(selectedIndex?.variation).toFixed(2)}%
+              Variação: {selectedIndex?.variation.toFixed(2)}%
             </Text>
-            <Button title="Fechar" onPress={() => setModalVisible(false)} />
+            <Button
+              title="Fechar"
+              onPress={() => setModalVisible(false)}
+              color={colors.primary}
+            />
           </View>
         </View>
       </Modal>
@@ -118,13 +127,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+    backgroundColor: colors.background,
   },
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: colors.background,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: colors.textSecondary,
   },
   errorText: {
-    color: "red",
+    color: colors.danger,
     fontSize: 16,
     textAlign: "center",
     marginBottom: 10,
@@ -133,11 +148,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: colors.transparent,
   },
   modalView: {
     margin: 20,
-    backgroundColor: "white",
+    backgroundColor: colors.cardBackground,
     borderRadius: 20,
     padding: 35,
     alignItems: "center",
@@ -155,10 +170,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 20,
     fontWeight: "bold",
+    color: colors.textPrimary,
   },
   modalText: {
     marginBottom: 15,
     textAlign: "center",
     fontSize: 16,
+    color: colors.textSecondary,
   },
 });

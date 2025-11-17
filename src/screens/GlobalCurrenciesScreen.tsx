@@ -9,7 +9,7 @@ import {
   Button,
 } from "react-native";
 
-import { colors } from "../theme/colors"; // Importando nosso tema
+import { colors } from "../theme/colors";
 import useApiData from "../hooks/useApiData";
 import { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
