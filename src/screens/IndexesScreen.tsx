@@ -7,7 +7,7 @@ import {
   Text,
 } from "react-native";
 
-import api, { IndexData } from "../services/api";
+import api, { IndexData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 
 const DESIRED_INDEXES = ["IBOVESPA", "CDI", "SELIC"];
@@ -21,13 +21,14 @@ export default function IndexesScreen() {
       const response = await api.get("/all");
       const data = response.data;
 
-      const filteredData: IndexData[] = Object.values(data).filter(
-        (item: any) => DESIRED_INDEXES.includes(item.name)
-      );
+      const filteredData: IndexData[] = Object.values(data)
+        .filter(isIndexData)
+        .filter((item) => DESIRED_INDEXES.includes(item.name));
 
       setIndexes(filteredData);
     } catch (error) {
       console.error("Erro ao buscar dados da API:", error);
+      // estado de erro para mostrar na tela
     } finally {
       setLoading(false);
     }
@@ -54,8 +55,8 @@ export default function IndexesScreen() {
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name}
-            value={item.points || item.variation}
-            variation={item.variation}
+            value={Number(item.points) || Number(item.variation)}
+            variation={Number(item.variation)}
             onPress={() => alert("A implementar")}
           />
         )}

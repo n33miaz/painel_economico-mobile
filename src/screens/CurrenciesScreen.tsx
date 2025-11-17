@@ -9,7 +9,7 @@ import {
   Button,
 } from "react-native";
 
-import api, { CurrencyData } from "../services/api";
+import api, { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 
 export default function CurrenciesScreen() {
@@ -23,11 +23,11 @@ export default function CurrenciesScreen() {
 
   async function fetchData() {
     try {
-      const response = await api.get<Record<string, CurrencyData>>("/all");
+      const response = await api.get("/all");
       const data = response.data;
-      const filteredData: CurrencyData[] = Object.values(data).filter(
-        (item: any) => item.codein !== "BRLT" // Dólar Turismo
-      );
+
+      const filteredData: CurrencyData[] =
+        Object.values(data).filter(isCurrencyData);
 
       setCurrencies(filteredData);
     } catch (error) {
