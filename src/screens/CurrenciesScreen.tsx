@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,75 +8,55 @@ import {
   Modal,
   Button,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import useApiData from '../hooks/useApiData';
-import api, { CurrencyData, isCurrencyData } from "../services/api";
+import useApiData from "../hooks/useApiData";
+import { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 
 export default function CurrenciesScreen() {
-  const [currencies, setCurrencies] = useState<CurrencyData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const {
+    data: currencies,
+    loading,
+    error,
+    fetchData: refreshCurrencies,
+  } = useApiData<CurrencyData>(
+    "https://economia.awesomeapi.com.br/json/all",
+    "@currencies",
+    isCurrencyData
+  );
 
+  const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyData | null>(
     null
   );
 
-  async function fetchData() {
-    const STORAGE_KEY = "@currencies";
-    const CACHE_DURATION = 10 * 60 * 1000; // 10 min
-
-    try {
-      const cachedDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
-      if (cachedDataJSON) {
-        const { timestamp, data } = JSON.parse(cachedDataJSON);
-
-        if (Date.now() - timestamp < CACHE_DURATION) {
-          setCurrencies(data);
-          setLoading(false);
-        }
-      }
-
-      const response = await api.get("/all");
-      const data = response.data;
-      const filteredData: CurrencyData[] =
-        Object.values(data).filter(isCurrencyData);
-
-      setCurrencies(filteredData);
-      const dataToCache = {
-        timestamp: Date.now(),
-        data: filteredData,
-      };
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(dataToCache));
-    } catch (error) {
-      console.error("Erro ao buscar dados da API:", error);
-    } finally {
-      if (loading) setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const onRefresh = React.useCallback(async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchData();
+    await refreshCurrencies();
     setRefreshing(false);
-  }, []);
+  }, [refreshCurrencies]);
 
   function handleOpenModal(item: CurrencyData) {
     setSelectedCurrency(item);
     setModalVisible(true);
   }
 
-  if (loading) {
+  if (loading && !currencies) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#0000ff" />
-        <Text>Carregando dados...</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Carregando dados...</Text>
+      </View>
+    );
+  }
+
+  if (error && !currencies) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>Erro ao carregar os dados.</Text>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Tentar Novamente" onPress={refreshCurrencies} />
       </View>
     );
   }
@@ -84,7 +64,7 @@ export default function CurrenciesScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={currencies}
+        data={currencies || []}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <IndicatorCard
@@ -96,6 +76,11 @@ export default function CurrenciesScreen() {
         )}
         onRefresh={onRefresh}
         refreshing={refreshing}
+        ListEmptyComponent={
+          <View style={styles.centered}>
+            <Text>Nenhuma moeda encontrada.</Text>
+          </View>
+        }
       />
 
       <Modal
@@ -132,29 +117,22 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: "#f5f5f5",
   },
-  itemContainer: {
-    backgroundColor: "#fff",
-    padding: 20,
-    marginVertical: 8,
-    borderRadius: 8,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.23,
-    shadowRadius: 2.62,
-    elevation: 4,
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: "gray",
   },
-  itemName: {
-    fontSize: 18,
-    fontWeight: "bold",
+  errorText: {
+    fontSize: 16,
+    color: "red",
+    textAlign: "center",
+    marginBottom: 10,
   },
   centeredView: {
     flex: 1,
