@@ -8,6 +8,7 @@ import {
   Modal,
   Button,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import api, { IndexData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
@@ -22,20 +23,34 @@ export default function IndexesScreen() {
   const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null);
 
   async function fetchData() {
+    const STORAGE_KEY = "@indexes";
+    const CACHE_DURATION = 10 * 60 * 1000; // 10 min
+
     try {
+      const cachedDataJSON = await AsyncStorage.getItem(STORAGE_KEY);
+      if (cachedDataJSON) {
+        const { timestamp, data } = JSON.parse(cachedDataJSON);
+
+        if (Date.now() - timestamp < CACHE_DURATION) {
+          setIndexes(data);
+          setLoading(false);
+        }
+      }
+
       const response = await api.get("/all");
       const data = response.data;
-
-      const filteredData: IndexData[] = Object.values(data)
-        .filter(isIndexData)
-        .filter((item) => DESIRED_INDEXES.includes(item.name));
+      const filteredData: IndexData[] = Object.values(data).filter(isIndexData);
 
       setIndexes(filteredData);
+      const dataToCache = {
+        timestamp: Date.now(),
+        data: filteredData,
+      };
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(dataToCache));
     } catch (error) {
       console.error("Erro ao buscar dados da API:", error);
-      // estado de erro para mostrar na tela
     } finally {
-      setLoading(false);
+      if (loading) setLoading(false);
     }
   }
 
