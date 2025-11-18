@@ -7,8 +7,6 @@ import {
   SafeAreaView,
   LayoutAnimation,
   ActivityIndicator,
-  Modal,
-  Button,
   RefreshControl,
 } from "react-native";
 
@@ -23,6 +21,7 @@ import {
 } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
+import DetailsModal from "../components/DetailsModal";
 
 type CombinedData = CurrencyData | IndexData;
 
@@ -77,6 +76,27 @@ export default function Favorites() {
     );
   }
 
+  const renderCard = useCallback(
+    ({ item }: { item: CombinedData }) => {
+      const isIndex = isIndexData(item);
+      const isCurrency = isCurrencyData(item);
+
+      return (
+        <IndicatorCard
+          name={item.name}
+          id={item.id}
+          value={isIndex ? item.points : isCurrency ? item.buy : 0}
+          variation={item.variation}
+          isFavorite={true}
+          onPress={() => handleOpenModal(item)}
+          onToggleFavorite={handleToggleFavorite}
+          symbol={isIndex && item.name === "IBOVESPA" ? "pts" : "R$"}
+        />
+      );
+    },
+    [favorites, handleToggleFavorite]
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
@@ -93,23 +113,7 @@ export default function Favorites() {
           />
         }
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const isIndex = isIndexData(item);
-          const isCurrency = isCurrencyData(item);
-
-          return (
-            <IndicatorCard
-              name={item.name}
-              id={item.id}
-              value={isIndex ? item.points : isCurrency ? item.buy : 0}
-              variation={item.variation}
-              isFavorite={true}
-              onPress={() => handleOpenModal(item)}
-              onToggleFavorite={handleToggleFavorite}
-              symbol={isIndex && item.name === "IBOVESPA" ? "pts" : "R$"}
-            />
-          );
-        }}
+        renderItem={renderCard}
         ListHeaderComponent={
           <Text style={styles.headerTitle}>Meus Favoritos</Text>
         }
@@ -125,42 +129,32 @@ export default function Favorites() {
         }
       />
 
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <Text style={styles.modalTitle}>{selectedItem?.name}</Text>
-            {selectedItem && isIndexData(selectedItem) && (
-              <Text style={styles.modalText}>
-                Pontos: {selectedItem.points.toFixed(2)}
-              </Text>
-            )}
-            {selectedItem && isCurrencyData(selectedItem) && (
-              <Text style={styles.modalText}>
-                Compra: R$ {selectedItem.buy.toFixed(2)}
-              </Text>
-            )}
-            {selectedItem && (
-              <Text style={styles.modalText}>
-                Variação: {selectedItem.variation.toFixed(2)}%
-              </Text>
-            )}
-            {selectedItem && isCurrencyData(selectedItem) && (
-              <HistoricalChart currencyCode={selectedItem.id} />
-            )}
-            <View style={styles.buttonSeparator} />
-            <Button
-              title="Fechar"
-              onPress={() => setModalVisible(false)}
-              color={colors.primary}
-            />
-          </View>
-        </View>
-      </Modal>
+      {selectedItem && (
+        <DetailsModal
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          title={selectedItem.name}
+        >
+          {isIndexData(selectedItem) && (
+            <Text style={styles.modalText}>
+              Pontos: {selectedItem.points.toFixed(2)}
+            </Text>
+          )}
+          {isCurrencyData(selectedItem) && (
+            <Text style={styles.modalText}>
+              Compra: R$ {selectedItem.buy.toFixed(2)}
+            </Text>
+          )}
+
+          <Text style={styles.modalText}>
+            Variação: {selectedItem.variation.toFixed(2)}%
+          </Text>
+
+          {isCurrencyData(selectedItem) && (
+            <HistoricalChart currencyCode={selectedItem.id} />
+          )}
+        </DetailsModal>
+      )}
     </SafeAreaView>
   );
 }
@@ -202,45 +196,11 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: colors.transparent,
-  },
-  modalView: {
-    width: "90%",
-    margin: 20,
-    backgroundColor: colors.cardBackground,
-    borderRadius: 20,
-    padding: 25,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  modalTitle: {
-    marginBottom: 15,
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: "bold",
-    color: colors.textPrimary,
-  },
   modalText: {
     marginBottom: 15,
     textAlign: "center",
     fontSize: 16,
     color: colors.textSecondary,
-  },
-  buttonSeparator: {
-    borderBottomColor: "#e0e0e0",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    width: "100%",
-    marginVertical: 15,
+    fontFamily: "Roboto_400Regular",
   },
 });
