@@ -12,6 +12,7 @@ import GlobalCurrencies from "../screens/GlobalCurrencies";
 import Indexes from "../screens/Indexes";
 import News from "../screens/News";
 import About from "../screens/About";
+import Favorites from '../screens/Favorites';
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -52,6 +53,7 @@ function DrawerNavigator() {
         component={TabNavigator}
         options={{ title: "Dashboard Brasil" }}
       />
+      <Drawer.Screen name="Favoritos" component={Favorites} />
       <Drawer.Screen name="Moedas Globais" component={GlobalCurrencies} />
       <Drawer.Screen name="Notícias" component={News} />
       <Drawer.Screen name="Sobre" component={About} />

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Modal,
   Button,
+  LayoutAnimation,
 } from "react-native";
 
 import { colors } from "../theme/colors";
