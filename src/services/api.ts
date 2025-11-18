@@ -19,8 +19,8 @@ export function isCurrencyData(item: any): item is CurrencyData {
     item &&
     typeof item.code === "string" &&
     typeof item.name === "string" &&
-    typeof item.buy === "number" &&
-    typeof item.variation === "string"
+    typeof item.buy !== "undefined" &&
+    typeof item.variation !== "undefined"
   );
 }
 
@@ -33,6 +33,8 @@ export interface IndexData {
 
 export function isIndexData(item: any): item is IndexData {
   return (
-    item && typeof item.name === "string" && typeof item.variation === "string"
+    item &&
+    typeof item.name === "string" &&
+    typeof item.variation !== "undefined"
   );
 }
