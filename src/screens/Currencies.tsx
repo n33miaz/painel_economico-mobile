@@ -57,6 +57,21 @@ export default function Currencies() {
     setModalVisible(false);
   }
 
+  const renderCurrencyCard = useCallback(
+    ({ item }: { item: CurrencyData }) => (
+      <IndicatorCard
+        name={item.name}
+        id={item.id}
+        value={item.buy}
+        variation={item.variation}
+        isFavorite={favorites.includes(item.id)}
+        onPress={() => handleOpenModal(item)}
+        onToggleFavorite={handleToggleFavorite}
+      />
+    ),
+    [favorites, handleToggleFavorite]
+  );
+
   if (loading && !currencies) {
     return (
       <View style={styles.centered}>
@@ -88,17 +103,7 @@ export default function Currencies() {
         maxToRenderPerBatch={10}
         data={currencies || []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <IndicatorCard
-            name={item.name}
-            id={item.id}
-            value={item.buy}
-            variation={item.variation}
-            isFavorite={favorites.includes(item.id)}
-            onPress={() => handleOpenModal(item)}
-            onToggleFavorite={handleToggleFavorite}
-          />
-        )}
+        renderItem={renderCurrencyCard}
         onRefresh={onRefresh}
         refreshing={refreshing}
         ListEmptyComponent={

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import api from "../services/api";
+import { isCurrencyData } from "../services/api";
 
 interface UseApiDataResult<T> {
   data: T[] | null;
@@ -61,7 +62,9 @@ function useApiData<T extends Identifiable>(
         .filter(typeGuard)
         .map((item: any) => ({
           ...item,
-          id: item.code || item.name,
+          id: isCurrencyData(item)
+            ? `currency_${item.code}`
+            : `index_${item.name}`,
           buy: parseNumeric(item.buy),
           sell: item.sell ? parseNumeric(item.sell) : null,
           variation: parseNumeric(item.variation),
