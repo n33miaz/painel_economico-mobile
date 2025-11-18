@@ -12,8 +12,8 @@ import Constants from "expo-constants";
 
 import { colors } from "../theme/colors";
 import useApiData from "../hooks/useApiData";
-import { CurrencyData, isCurrencyData } from "../services/api";
 import useNewsData from "../hooks/useNewsData";
+import { CurrencyData, isCurrencyData } from "../services/api";
 import HighlightCard from "../components/HighlightCard";
 
 const HIGHLIGHT_ITEMS = ["USD", "EUR", "CAD"];
@@ -32,6 +32,8 @@ export default function HomeScreen({ navigation }: any) {
   );
 
   const { articles: news, loading: newsLoading } = useNewsData({ pageSize: 3 });
+
+  const isContentLoading = highlightsLoading || newsLoading;
 
   const getIconForCode = (code: string) => {
     switch (code) {
@@ -53,57 +55,53 @@ export default function HomeScreen({ navigation }: any) {
         <Text style={styles.subtitle}>Resumo do mercado hoje</Text>
       </View>
 
-      {highlightsLoading && (
-        <ActivityIndicator
-          size="large"
-          color={colors.primary}
-          style={{ marginTop: 40 }}
-        />
-      )}
-
-      {highlightsError && (
-        <Text style={styles.errorText}>
-          Não foi possível carregar os destaques.
-        </Text>
-      )}
-
-      <View style={styles.highlightRow}>
-        {highlights?.map((item) => (
-          <HighlightCard
-            key={item.code}
-            title={item.name.split("/")[0]}
-            value={item.buy}
-            variation={item.variation}
-            iconName={getIconForCode(item.code)}
-          />
-        ))}
-      </View>
-
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Últimas Notícias</Text>
-          <TouchableOpacity onPress={() => navigation.navigate("Notícias")}>
-            <Text style={styles.seeAll}>Ver todas</Text>
-          </TouchableOpacity>
+      {isContentLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
+      ) : (
+        <>
+          {highlightsError && (
+            <Text style={styles.errorText}>
+              Não foi possível carregar os destaques.
+            </Text>
+          )}
 
-        {newsLoading ? (
-          <ActivityIndicator color={colors.primary} />
-        ) : (
-          news.map((article) => (
-            <TouchableOpacity
-              key={article.url}
-              style={styles.newsItem}
-              onPress={() => Linking.openURL(article.url)}
-            >
-              <Text style={styles.newsSource}>{article.source.name}</Text>
-              <Text style={styles.newsTitle} numberOfLines={2}>
-                {article.title}
-              </Text>
-            </TouchableOpacity>
-          ))
-        )}
-      </View>
+          <View style={styles.highlightRow}>
+            {highlights?.map((item) => (
+              <HighlightCard
+                key={item.code}
+                title={item.name.split("/")[0]}
+                value={item.buy}
+                variation={item.variation}
+                iconName={getIconForCode(item.code)}
+              />
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Últimas Notícias</Text>
+              <TouchableOpacity onPress={() => navigation.navigate("Notícias")}>
+                <Text style={styles.seeAll}>Ver todas</Text>
+              </TouchableOpacity>
+            </View>
+
+            {news.map((article) => (
+              <TouchableOpacity
+                key={article.url}
+                style={styles.newsItem}
+                onPress={() => Linking.openURL(article.url)}
+              >
+                <Text style={styles.newsSource}>{article.source.name}</Text>
+                <Text style={styles.newsTitle} numberOfLines={2}>
+                  {article.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </>
+      )}
     </ScrollView>
   );
 }
@@ -113,6 +111,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: Constants.statusBarHeight,
+  },
+  loadingContainer: {
+    marginTop: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   header: {
     paddingHorizontal: 24,

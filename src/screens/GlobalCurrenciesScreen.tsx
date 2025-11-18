@@ -171,7 +171,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.transparent,
   },
   modalView: {
-    margin: "90%",
+    width: "90%",
+    margin: 20,
     backgroundColor: colors.cardBackground,
     borderRadius: 20,
     padding: 35,

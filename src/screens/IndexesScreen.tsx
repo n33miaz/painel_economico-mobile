@@ -110,8 +110,8 @@ export default function IndexesScreen() {
             <Text style={styles.modalText}>
               Variação: {selectedIndex?.variation.toFixed(2)}%
             </Text>
-            {selectedCurrency && (
-              <HistoricalChart currencyCode={selectedCurrency.code} />
+            {selectedIndex  && (
+              <HistoricalChart currencyCode={selectedIndex.name} />
             )}
             <View style={styles.buttonSeparator} />
             <Button
@@ -156,7 +156,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.transparent,
   },
   modalView: {
-    margin: "90%",
+    width: "90%",
+    margin: 20,
     backgroundColor: colors.cardBackground,
     borderRadius: 20,
     padding: 35,
