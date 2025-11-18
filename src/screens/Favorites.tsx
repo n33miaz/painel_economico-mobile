@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,11 @@ import {
   SafeAreaView,
   LayoutAnimation,
   ActivityIndicator,
+  Modal,
+  Button,
 } from "react-native";
 
+import { colors } from "../theme/colors";
 import { useFavoritesStore } from "../store/favoritesStore";
 import useApiData from "../hooks/useApiData";
 import {
@@ -18,7 +21,7 @@ import {
   isIndexData,
 } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
-import { colors } from "../theme/colors";
+import HistoricalChart from "../components/HistoricalChart";
 
 type CombinedData = CurrencyData | IndexData;
 
@@ -28,6 +31,9 @@ export default function Favorites() {
     "@all_data_for_favorites",
     (item): item is CombinedData => isCurrencyData(item) || isIndexData(item)
   );
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<CombinedData | null>(null);
 
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
@@ -40,7 +46,12 @@ export default function Favorites() {
     [toggleFavorite]
   );
 
-  const favoriteItems = React.useMemo(() => {
+  function handleOpenModal(item: CombinedData) {
+    setSelectedItem(item);
+    setModalVisible(true);
+  }
+
+  const favoriteItems = useMemo(() => {
     if (!allData) return [];
     return allData.filter((item) =>
       favorites.includes(isCurrencyData(item) ? item.code : item.name)
@@ -71,9 +82,7 @@ export default function Favorites() {
               value={isIndex ? item.points : isCurrency ? item.buy : 0}
               variation={item.variation}
               isFavorite={true}
-              onPress={() => {
-                alert("Funcionalide de Modal em breve."); // TODO
-              }}
+              onPress={() => handleOpenModal(item)}
               onToggleFavorite={handleToggleFavorite}
               symbol={isIndex && item.name === "IBOVESPA" ? "pts" : "R$"}
             />
@@ -93,6 +102,43 @@ export default function Favorites() {
           </View>
         }
       />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>{selectedItem?.name}</Text>
+            {selectedItem && isIndexData(selectedItem) && (
+              <Text style={styles.modalText}>
+                Pontos: {selectedItem.points.toFixed(2)}
+              </Text>
+            )}
+            {selectedItem && isCurrencyData(selectedItem) && (
+              <Text style={styles.modalText}>
+                Compra: R$ {selectedItem.buy.toFixed(2)}
+              </Text>
+            )}
+            {selectedItem && (
+              <Text style={styles.modalText}>
+                Variação: {selectedItem.variation.toFixed(2)}%
+              </Text>
+            )}
+            {selectedItem && isCurrencyData(selectedItem) && (
+              <HistoricalChart currencyCode={selectedItem.code} />
+            )}
+            <View style={styles.buttonSeparator} />
+            <Button
+              title="Fechar"
+              onPress={() => setModalVisible(false)}
+              color={colors.primary}
+            />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -133,5 +179,46 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: "center",
     marginTop: 8,
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.transparent,
+  },
+  modalView: {
+    width: "90%",
+    margin: 20,
+    backgroundColor: colors.cardBackground,
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 20,
+    fontWeight: "bold",
+    color: colors.textPrimary,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: "center",
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  buttonSeparator: {
+    borderBottomColor: "#e0e0e0",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    width: "100%",
+    marginVertical: 15,
   },
 });
