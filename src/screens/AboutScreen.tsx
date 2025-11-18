@@ -125,10 +125,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   linkedinButton: {
-    backgroundColor: "#0A66C2",
+    backgroundColor: colors.linkedinBlue,
   },
   githubButton: {
-    backgroundColor: "#181717",
+    backgroundColor: colors.githubDark,
   },
   buttonText: {
     color: colors.textLight,

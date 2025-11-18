@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   highlightRow: {
-    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "space-between",
     paddingHorizontal: 16,
   },
