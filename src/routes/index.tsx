@@ -6,6 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
 
+import HomeScreen from "../screens/HomeScreen";
 import CurrenciesScreen from "../screens/CurrenciesScreen";
 import GlobalCurrenciesScreen from "../screens/GlobalCurrenciesScreen";
 import IndexesScreen from "../screens/IndexesScreen";
@@ -18,10 +19,13 @@ const Drawer = createDrawerNavigator();
 function TabNavigator() {
   return (
     <Tab.Navigator
+      initialRouteName="Home"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === "Moedas") {
+          if (route.name === "Home") {
+            iconName = focused ? "home" : "home-outline";
+          } else if (route.name === "Moedas") {
             iconName = focused ? "cash" : "cash-outline";
           } else if (route.name === "Índices") {
             iconName = focused ? "stats-chart" : "stats-chart-outline";
@@ -33,6 +37,7 @@ function TabNavigator() {
         headerShown: false,
       })}
     >
+      <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Moedas" component={CurrenciesScreen} />
       <Tab.Screen name="Índices" component={IndexesScreen} />
     </Tab.Navigator>
