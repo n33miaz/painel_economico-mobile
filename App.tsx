@@ -7,7 +7,6 @@ import {
   Roboto_700Bold,
 } from "@expo-google-fonts/roboto";
 import { ActivityIndicator, View, Platform, UIManager } from "react-native";
-
 import Routes from "./src/routes";
 
 if (

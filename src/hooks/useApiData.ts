@@ -10,6 +10,10 @@ interface UseApiDataResult<T> {
   fetchData: () => Promise<void>;
 }
 
+export interface Identifiable {
+  id: string;
+}
+
 const parseNumeric = (value: any): number => {
   if (typeof value === "number") return value;
   if (typeof value === "string") {
@@ -19,7 +23,7 @@ const parseNumeric = (value: any): number => {
   return 0;
 };
 
-function useApiData<T>(
+function useApiData<T extends Identifiable>(
   apiEndpoint: string,
   storageKey: string,
   typeGuard: (item: any) => item is T,
@@ -57,6 +61,7 @@ function useApiData<T>(
         .filter(typeGuard)
         .map((item: any) => ({
           ...item,
+          id: item.code || item.name,
           buy: parseNumeric(item.buy),
           sell: item.sell ? parseNumeric(item.sell) : null,
           variation: parseNumeric(item.variation),

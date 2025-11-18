@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Identifiable } from "../hooks/useApiData";
 
 const api = axios.create({
   baseURL: "https://economia.awesomeapi.com.br/json",
@@ -6,7 +7,7 @@ const api = axios.create({
 
 export default api;
 
-export interface CurrencyData {
+export interface CurrencyData extends Identifiable {
   code: string;
   name: string;
   buy: number;
@@ -24,7 +25,7 @@ export function isCurrencyData(item: any): item is CurrencyData {
   );
 }
 
-export interface IndexData {
+export interface IndexData extends Identifiable {
   name: string;
   location: string;
   points: number;

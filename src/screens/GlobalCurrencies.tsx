@@ -51,9 +51,9 @@ export default function GlobalCurrencies() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const handleToggleFavorite = useCallback(
-    (code: string) => {
+    (id: string) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      toggleFavorite(code);
+      toggleFavorite(id);
     },
     [toggleFavorite]
   );
@@ -100,14 +100,14 @@ export default function GlobalCurrencies() {
         windowSize={5}
         maxToRenderPerBatch={10}
         data={currencies || []}
-        keyExtractor={(item) => item.code}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name}
-            code={item.code}
+            id={item.id}
             value={item.buy}
             variation={item.variation}
-            isFavorite={favorites.includes(item.code)}
+            isFavorite={favorites.includes(item.id)}
             onPress={() => handleOpenModal(item)}
             onToggleFavorite={handleToggleFavorite}
           />
@@ -143,7 +143,7 @@ export default function GlobalCurrencies() {
               Variação: {selectedCurrency?.variation.toFixed(2)}%
             </Text>
             {selectedCurrency && (
-              <HistoricalChart currencyCode={selectedCurrency.code} />
+              <HistoricalChart id={selectedCurrency.id} />
             )}
             <View style={styles.buttonSeparator} />
             <Button

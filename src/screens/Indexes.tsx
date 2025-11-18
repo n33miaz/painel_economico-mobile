@@ -89,15 +89,15 @@ export default function Indexes() {
         windowSize={5}
         maxToRenderPerBatch={10}
         data={indexes || []}
-        keyExtractor={(item) => item.name}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <IndicatorCard
             name={item.name}
-            code={item.name}
+            id={item.id}
             value={item.points || item.variation}
             variation={item.variation}
             symbol={item.name !== "IBOVESPA" ? "" : "pts"}
-            isFavorite={favorites.includes(item.name)}
+            isFavorite={favorites.includes(item.id)}
             onPress={() => handleOpenModal(item)}
             onToggleFavorite={handleToggleFavorite}
           />

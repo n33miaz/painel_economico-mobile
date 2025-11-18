@@ -28,7 +28,7 @@ export default function Home({ navigation }: any) {
     "@highlights",
     isCurrencyData,
     5 * 60 * 1000,
-    (item) => HIGHLIGHT_ITEMS.includes(item.code)
+    (item) => HIGHLIGHT_ITEMS.includes(item.id)
   );
 
   const { articles: news, loading: newsLoading } = useNewsData({ pageSize: 3 });
@@ -70,7 +70,7 @@ export default function Home({ navigation }: any) {
           <View style={styles.highlightRow}>
             {highlights?.map((item) => (
               <HighlightCard
-                key={item.code}
+                key={item.id}
                 title={item.name.split("/")[0]}
                 value={item.buy}
                 variation={item.variation}

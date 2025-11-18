@@ -46,9 +46,9 @@ export default function Favorites() {
   const [refreshing, setRefreshing] = useState(false);
 
   const handleToggleFavorite = useCallback(
-    (code: string) => {
+    (id: string) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      toggleFavorite(code);
+      toggleFavorite(id);
     },
     [toggleFavorite]
   );
@@ -66,9 +66,7 @@ export default function Favorites() {
 
   const favoriteItems = useMemo(() => {
     if (!allData) return [];
-    return allData.filter((item) =>
-      favorites.includes(isCurrencyData(item) ? item.code : item.name)
-    );
+    return allData.filter((item) => favorites.includes(item.id));
   }, [allData, favorites]);
 
   if (loading && favoriteItems.length === 0) {
@@ -94,7 +92,7 @@ export default function Favorites() {
             tintColor={colors.primary}
           />
         }
-        keyExtractor={(item) => (isCurrencyData(item) ? item.code : item.name)}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const isIndex = isIndexData(item);
           const isCurrency = isCurrencyData(item);
@@ -102,7 +100,7 @@ export default function Favorites() {
           return (
             <IndicatorCard
               name={item.name}
-              code={isCurrency ? item.code : item.name}
+              id={item.id}
               value={isIndex ? item.points : isCurrency ? item.buy : 0}
               variation={item.variation}
               isFavorite={true}
@@ -152,7 +150,7 @@ export default function Favorites() {
               </Text>
             )}
             {selectedItem && isCurrencyData(selectedItem) && (
-              <HistoricalChart currencyCode={selectedItem.code} />
+              <HistoricalChart id={selectedItem.id} />
             )}
             <View style={styles.buttonSeparator} />
             <Button

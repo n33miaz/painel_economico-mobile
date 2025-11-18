@@ -6,18 +6,18 @@ import { colors } from "../theme/colors";
 
 interface IndicatorCardProps {
   name: string;
-  code: string;
+  id: string;
   value: number;
   variation: number;
   isFavorite: boolean;
   onPress: () => void;
-  onToggleFavorite: (code: string) => void;
+  onToggleFavorite: (id: string) => void;
   symbol?: string;
 }
 
 export default function IndicatorCard({
   name,
-  code,
+  id,
   value,
   variation,
   isFavorite,
@@ -30,7 +30,7 @@ export default function IndicatorCard({
 
   const handleFavoritePress = (e: any) => {
     e.stopPropagation();
-    onToggleFavorite(code);
+    onToggleFavorite(id);
   };
 
   return (
