@@ -1,40 +1,30 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface FavoritesState {
   favorites: string[];
   toggleFavorite: (code: string) => void;
-  loadFavorites: () => Promise<void>;
 }
 
-const FAVORITES_STORAGE_KEY = "@favorites";
+export const useFavoritesStore = create(
+  persist<FavoritesState>(
+    (set, get) => ({
+      favorites: [],
+      toggleFavorite: (code: string) => {
+        const currentFavorites = get().favorites;
+        const isFavorite = currentFavorites.includes(code);
 
-export const useFavoritesStore = create<FavoritesState>((set, get) => ({
-  favorites: [],
+        const newFavorites = isFavorite
+          ? currentFavorites.filter((fav) => fav !== code)
+          : [...currentFavorites, code];
 
-  toggleFavorite: async (code: string) => {
-    const currentFavorites = get().favorites;
-    const isFavorite = currentFavorites.includes(code);
-
-    const newFavorites = isFavorite
-      ? currentFavorites.filter((fav) => fav !== code)
-      : [...currentFavorites, code];
-
-    set({ favorites: newFavorites });
-    await AsyncStorage.setItem(
-      FAVORITES_STORAGE_KEY,
-      JSON.stringify(newFavorites)
-    );
-  },
-
-  loadFavorites: async () => {
-    try {
-      const storedFavorites = await AsyncStorage.getItem(FAVORITES_STORAGE_KEY);
-      if (storedFavorites) {
-        set({ favorites: JSON.parse(storedFavorites) });
-      }
-    } catch (error) {
-      console.error("Erro ao carregar favoritos:", error);
+        set({ favorites: newFavorites });
+      },
+    }),
+    {
+      name: "@favorites",
+      storage: createJSONStorage(() => AsyncStorage),
     }
-  },
-}));
+  )
+);

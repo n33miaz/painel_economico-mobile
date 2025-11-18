@@ -9,17 +9,12 @@ import {
 } from "@expo-google-fonts/roboto";
 
 import Routes from "./src/routes";
-import { useFavoritesStore } from "./src/store/favoritesStore";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
     Roboto_400Regular,
     Roboto_700Bold,
   });
-
-  useEffect(() => {
-    useFavoritesStore.getState().loadFavorites();
-  }, []);
 
   if (!fontsLoaded) {
     return (
