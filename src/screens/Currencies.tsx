@@ -79,6 +79,9 @@ export default function Currencies() {
   return (
     <View style={styles.container}>
       <FlatList
+        initialNumToRender={10}
+        windowSize={5}
+        maxToRenderPerBatch={10}
         data={currencies || []}
         keyExtractor={(item) => item.code}
         renderItem={({ item }) => (

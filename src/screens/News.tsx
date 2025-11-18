@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   FlatList,
   ActivityIndicator,
   SafeAreaView,
+  RefreshControl,
 } from "react-native";
 
 import { colors } from "../theme/colors";
@@ -13,7 +14,15 @@ import NewsCard from "../components/NewsCard";
 import useNewsData from "../hooks/useNewsData";
 
 export default function News() {
-  const { articles, loading, error } = useNewsData({ pageSize: 20 });
+  const { articles, loading, error, fetchNews } = useNewsData({ pageSize: 20 });
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchNews();
+    setRefreshing(false);
+  }, [fetchNews]);
 
   if (loading) {
     return (
@@ -35,8 +44,19 @@ export default function News() {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
+        initialNumToRender={10}
+        windowSize={5}
+        maxToRenderPerBatch={10}
         data={articles}
         keyExtractor={(item) => item.url}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         renderItem={({ item }) => <NewsCard article={item} />}
         ListHeaderComponent={
           <Text style={styles.headerTitle}>Principais Notícias</Text>

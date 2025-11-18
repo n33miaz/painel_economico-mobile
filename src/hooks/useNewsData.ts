@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 import newsApi, { NewsArticle } from "../services/newsApi";
 
@@ -12,6 +12,7 @@ interface UseNewsDataResult {
   articles: NewsArticle[];
   loading: boolean;
   error: string | null;
+  fetchNews: () => Promise<void>;
 }
 
 export default function useNewsData({
@@ -23,25 +24,27 @@ export default function useNewsData({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await newsApi.get("/top-headlines", {
-          params: { country, category, pageSize },
-        });
-        setArticles(response.data.articles);
-      } catch (e: any) {
-        setError("Não foi possível carregar as notícias.");
-        console.error("Erro ao buscar notícias:", e);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNews();
+  const fetchNews = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await newsApi.get("/top-headlines", {
+        params: { country, category, pageSize },
+      });
+      setArticles(response.data.articles);
+    } catch (e: any) {
+      const errorMessage =
+        e.response?.data?.message || "Não foi possível carregar as notícias.";
+      setError(errorMessage);
+      console.error("Erro ao buscar notícias:", e.response?.data || e);
+    } finally {
+      setLoading(false);
+    }
   }, [country, category, pageSize]);
 
-  return { articles, loading, error };
+  useEffect(() => {
+    fetchNews();
+  }, [fetchNews]);
+
+  return { articles, loading, error, fetchNews };
 }

@@ -85,6 +85,9 @@ export default function Indexes() {
   return (
     <View style={styles.container}>
       <FlatList
+        initialNumToRender={10}
+        windowSize={5}
+        maxToRenderPerBatch={10}
         data={indexes || []}
         keyExtractor={(item) => item.name}
         renderItem={({ item }) => (

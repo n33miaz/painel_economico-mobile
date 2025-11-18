@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   Button,
+  RefreshControl,
 } from "react-native";
 
 import { colors } from "../theme/colors";
@@ -26,7 +27,11 @@ import HistoricalChart from "../components/HistoricalChart";
 type CombinedData = CurrencyData | IndexData;
 
 export default function Favorites() {
-  const { data: allData, loading } = useApiData<CombinedData>(
+  const {
+    data: allData,
+    loading,
+    fetchData: refreshAllData,
+  } = useApiData<CombinedData>(
     "/all",
     "@all_data_for_favorites",
     (item): item is CombinedData => isCurrencyData(item) || isIndexData(item)
@@ -37,6 +42,8 @@ export default function Favorites() {
 
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleToggleFavorite = useCallback(
     (code: string) => {
@@ -50,6 +57,12 @@ export default function Favorites() {
     setSelectedItem(item);
     setModalVisible(true);
   }
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refreshAllData();
+    setRefreshing(false);
+  }, [refreshAllData]);
 
   const favoriteItems = useMemo(() => {
     if (!allData) return [];
@@ -69,7 +82,18 @@ export default function Favorites() {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
+        initialNumToRender={10}
+        windowSize={5}
+        maxToRenderPerBatch={10}
         data={favoriteItems}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         keyExtractor={(item) => (isCurrencyData(item) ? item.code : item.name)}
         renderItem={({ item }) => {
           const isIndex = isIndexData(item);
