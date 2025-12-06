@@ -1,11 +1,20 @@
 import axios from "axios";
+import { API_BASE_URL } from "@env";
 import { Identifiable } from "../hooks/useApiData";
 
+if (!API_BASE_URL) {
+  console.error(
+    "A variável de ambiente API_BASE_URL não está definida. Verifique seu arquivo .env"
+  );
+}
+
 const api = axios.create({
-  baseURL: "https://economia.awesomeapi.com.br/json",
+  baseURL: API_BASE_URL,
 });
 
 export default api;
+
+// --- Interfaces ---
 
 export interface CurrencyData extends Identifiable {
   code: string;
@@ -14,6 +23,31 @@ export interface CurrencyData extends Identifiable {
   sell: number | null;
   variation: number;
 }
+
+export interface IndexData extends Identifiable {
+  name: string;
+  location: string;
+  points: number;
+  variation: number;
+}
+
+export interface NewsArticle {
+  title: string;
+  description: string | null;
+  url: string;
+  urlToImage: string | null;
+  publishedAt: string;
+  source: {
+    name: string;
+  };
+}
+
+export interface HistoricalDataPoint {
+  timestamp: string;
+  high: string;
+}
+
+// --- Type Guards ---
 
 export function isCurrencyData(item: any): item is CurrencyData {
   return (
@@ -25,13 +59,6 @@ export function isCurrencyData(item: any): item is CurrencyData {
   );
 }
 
-export interface IndexData extends Identifiable {
-  name: string;
-  location: string;
-  points: number;
-  variation: number;
-}
-
 export function isIndexData(item: any): item is IndexData {
   return (
     item &&
@@ -40,23 +67,26 @@ export function isIndexData(item: any): item is IndexData {
   );
 }
 
-export interface HistoricalDataPoint {
-  timestamp: string;
-  high: string;
-}
+// --- Funções de Serviço ---
 
 export const getHistoricalData = async (
   currencyCode: string,
   days: number = 7
 ): Promise<HistoricalDataPoint[]> => {
   try {
-    const response = await api.get(`/daily/${currencyCode}-BRL/${days}`);
+    const response = await api.get(`/indicators/historical/${currencyCode}`, {
+      params: { days },
+    });
+
     if (response.status === 200 && Array.isArray(response.data)) {
       return response.data;
     }
     return [];
   } catch (error) {
-    console.error("Erro ao buscar dados históricos:", error);
+    console.error(
+      `Erro ao buscar dados históricos para ${currencyCode}:`,
+      error
+    );
     throw error;
   }
 };
