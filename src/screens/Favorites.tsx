@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,10 +8,10 @@ import {
   LayoutAnimation,
   ActivityIndicator,
   RefreshControl,
+  Button,
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import useApiData from "../hooks/useApiData";
 import {
   CurrencyData,
   IndexData,
@@ -22,59 +22,46 @@ import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
+import { useIndicatorStore } from "../store/indicatorStore";
 
 type CombinedData = CurrencyData | IndexData;
 
 export default function Favorites() {
-  const {
-    data: allData,
-    loading,
-    fetchData: refreshAllData,
-  } = useApiData<CombinedData>(
-    "/indicators/all",
-    "@all_indicators",
-    (item): item is CombinedData => isCurrencyData(item) || isIndexData(item)
-  );
+  const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
+  const { favorites, toggleFavorite } = useFavoritesStore();
+
+  useEffect(() => {
+    fetchIndicators();
+  }, [fetchIndicators]);
+
+  const favoriteItems = useMemo(() => {
+    return indicators.filter((item) => favorites.includes(item.id));
+  }, [indicators, favorites]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CombinedData | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
-
-  const favorites = useFavoritesStore((state) => state.favorites);
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const handleToggleFavorite = useCallback(
     (id: string) => {
-      // Animação suave ao remover um item da lista
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       toggleFavorite(id);
     },
     [toggleFavorite]
   );
 
-  function handleOpenModal(item: CombinedData) {
+  const onRefresh = useCallback(async () => {
+    await fetchIndicators();
+  }, [fetchIndicators]);
+
+  const handleOpenModal = useCallback((item: CombinedData) => {
     setSelectedItem(item);
     setModalVisible(true);
-  }
+  }, []);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refreshAllData();
-    setRefreshing(false);
-  }, [refreshAllData]);
-
-  const favoriteItems = useMemo(() => {
-    if (!allData) return [];
-    return allData.filter((item) => favorites.includes(item.id));
-  }, [allData, favorites]);
-
-  if (loading && favoriteItems.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
+  const handleCloseModal = useCallback(() => {
+    setModalVisible(false);
+    setSelectedItem(null);
+  }, []);
 
   const renderFavoriteCard = useCallback(
     ({ item }: { item: CombinedData }) => {
@@ -94,8 +81,31 @@ export default function Favorites() {
         />
       );
     },
-    [handleToggleFavorite]
+    [handleToggleFavorite, handleOpenModal]
   );
+
+  if (loading && favoriteItems.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && favoriteItems.length === 0) {
+    return (
+      <View style={styles.centered}>
+        <Text style={styles.errorText}>
+          Ocorreu um erro ao carregar os dados.
+        </Text>
+        <Button
+          title="Tentar Novamente"
+          onPress={onRefresh}
+          color={colors.primary}
+        />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -105,7 +115,7 @@ export default function Favorites() {
         renderItem={renderFavoriteCard}
         refreshControl={
           <RefreshControl
-            refreshing={refreshing}
+            refreshing={loading}
             onRefresh={onRefresh}
             colors={[colors.primary]}
             tintColor={colors.primary}
@@ -115,41 +125,45 @@ export default function Favorites() {
           <Text style={styles.headerTitle}>Meus Favoritos</Text>
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              Você ainda não adicionou favoritos.
-            </Text>
-            <Text style={styles.emptySubText}>
-              Clique na estrela ☆ para acompanhar um ativo.
-            </Text>
-          </View>
+          !loading ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>
+                Você ainda não adicionou favoritos.
+              </Text>
+              <Text style={styles.emptySubText}>
+                Clique na estrela ☆ para acompanhar um ativo.
+              </Text>
+            </View>
+          ) : null
         }
       />
 
       {selectedItem && (
         <DetailsModal
           visible={modalVisible}
-          onClose={() => setModalVisible(false)}
+          onClose={handleCloseModal}
           title={selectedItem.name}
         >
-          {isIndexData(selectedItem) && (
-            <Text style={styles.modalText}>
-              Pontos: {selectedItem.points.toFixed(2)}
-            </Text>
-          )}
-          {isCurrencyData(selectedItem) && (
-            <Text style={styles.modalText}>
-              Compra: R$ {selectedItem.buy.toFixed(2)}
-            </Text>
-          )}
+          <>
+            {isIndexData(selectedItem) && (
+              <Text style={styles.modalText}>
+                Pontos: {selectedItem.points.toFixed(2)}
+              </Text>
+            )}
+            {isCurrencyData(selectedItem) && (
+              <Text style={styles.modalText}>
+                Compra: R$ {selectedItem.buy.toFixed(2)}
+              </Text>
+            )}
 
-          <Text style={styles.modalText}>
-            Variação: {selectedItem.variation.toFixed(2)}%
-          </Text>
+            <Text style={styles.modalText}>
+              Variação: {selectedItem.variation.toFixed(2)}%
+            </Text>
 
-          {isCurrencyData(selectedItem) && (
-            <HistoricalChart currencyCode={selectedItem.code} />
-          )}
+            {isCurrencyData(selectedItem) && (
+              <HistoricalChart currencyCode={selectedItem.code} />
+            )}
+          </>
         </DetailsModal>
       )}
     </SafeAreaView>
@@ -199,5 +213,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.textSecondary,
     fontFamily: "Roboto_400Regular",
+  },
+  errorText: {
+    color: colors.danger,
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 10,
   },
 });

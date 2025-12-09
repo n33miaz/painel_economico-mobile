@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -7,40 +7,40 @@ import {
   Text,
   Button,
   LayoutAnimation,
+  RefreshControl,
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import useApiData from "../hooks/useApiData";
 import { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
+import { useIndicatorStore } from "../store/indicatorStore";
 
 const DESIRED_CURRENCIES = ["USD", "EUR", "JPY", "GBP", "CAD"];
 
 export default function GlobalCurrencies() {
-  const {
-    data: currencies,
-    loading,
-    error,
-    fetchData: refreshData,
-  } = useApiData<CurrencyData>(
-    "/indicators/all",
-    "@global_currencies",
-    isCurrencyData,
-    10 * 60 * 1000,
-    (item) => DESIRED_CURRENCIES.includes(item.code)
+  const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
+
+  const currencies = useMemo(
+    () =>
+      indicators
+        .filter(isCurrencyData)
+        .filter((item) => DESIRED_CURRENCIES.includes(item.code)),
+    [indicators]
   );
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  useEffect(() => {
+    fetchIndicators();
+  }, [fetchIndicators]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyData | null>(
     null
   );
 
-  const favorites = useFavoritesStore((state) => state.favorites);
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { favorites, toggleFavorite } = useFavoritesStore();
 
   const handleToggleFavorite = useCallback(
     (id: string) => {
@@ -50,20 +50,18 @@ export default function GlobalCurrencies() {
     [toggleFavorite]
   );
 
-  const handleRefresh = useCallback(async () => {
-    setIsRefreshing(true);
-    await refreshData();
-    setIsRefreshing(false);
-  }, [refreshData]);
+  const onRefresh = useCallback(async () => {
+    await fetchIndicators();
+  }, [fetchIndicators]);
 
   const handleOpenModal = useCallback((item: CurrencyData) => {
     setSelectedCurrency(item);
     setModalVisible(true);
   }, []);
 
-  function handleCloseModal() {
+  const handleCloseModal = useCallback(() => {
     setModalVisible(false);
-  }
+  }, []);
 
   const renderCurrencyCard = useCallback(
     ({ item }: { item: CurrencyData }) => (
@@ -80,7 +78,7 @@ export default function GlobalCurrencies() {
     [favorites, handleToggleFavorite, handleOpenModal]
   );
 
-  if (loading && !currencies) {
+  if (loading && currencies.length === 0) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -89,7 +87,7 @@ export default function GlobalCurrencies() {
     );
   }
 
-  if (error && !currencies) {
+  if (error && currencies.length === 0) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>
@@ -97,7 +95,7 @@ export default function GlobalCurrencies() {
         </Text>
         <Button
           title="Tentar Novamente"
-          onPress={refreshData}
+          onPress={onRefresh}
           color={colors.primary}
         />
       </View>
@@ -110,11 +108,17 @@ export default function GlobalCurrencies() {
         initialNumToRender={5}
         windowSize={3}
         maxToRenderPerBatch={5}
-        data={currencies || []}
+        data={currencies}
         keyExtractor={(item) => item.id}
         renderItem={renderCurrencyCard}
-        onRefresh={handleRefresh}
-        refreshing={isRefreshing}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListEmptyComponent={
           !loading ? (
             <View style={styles.centered}>
@@ -130,18 +134,20 @@ export default function GlobalCurrencies() {
           onClose={handleCloseModal}
           title={selectedCurrency.name}
         >
-          <Text style={styles.modalText}>
-            Compra (em BRL): R$ {selectedCurrency.buy.toFixed(2)}
-          </Text>
-          <Text style={styles.modalText}>
-            Venda (em BRL): R${" "}
-            {selectedCurrency.sell ? selectedCurrency.sell.toFixed(2) : "N/A"}
-          </Text>
-          <Text style={styles.modalText}>
-            Variação: {selectedCurrency.variation.toFixed(2)}%
-          </Text>
+          <>
+            <Text style={styles.modalText}>
+              Compra (em BRL): R$ {selectedCurrency.buy.toFixed(2)}
+            </Text>
+            <Text style={styles.modalText}>
+              Venda (em BRL): R${" "}
+              {selectedCurrency.sell ? selectedCurrency.sell.toFixed(2) : "N/A"}
+            </Text>
+            <Text style={styles.modalText}>
+              Variação: {selectedCurrency.variation.toFixed(2)}%
+            </Text>
 
-          <HistoricalChart currencyCode={selectedCurrency.code} />
+            <HistoricalChart currencyCode={selectedCurrency.code} />
+          </>
         </DetailsModal>
       )}
     </View>

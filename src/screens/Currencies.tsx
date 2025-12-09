@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,36 +7,35 @@ import {
   ActivityIndicator,
   Button,
   LayoutAnimation,
+  RefreshControl,
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import useApiData from "../hooks/useApiData";
 import { CurrencyData, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
+import { useIndicatorStore } from "../store/indicatorStore";
 
 export default function Currencies() {
-  const {
-    data: currencies,
-    loading,
-    error,
-    fetchData: refreshCurrencies,
-  } = useApiData<CurrencyData>(
-    "/indicators/all",
-    "@currencies",
-    isCurrencyData
+  const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
+
+  const currencies = useMemo(
+    () => indicators.filter(isCurrencyData),
+    [indicators]
   );
 
-  const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    fetchIndicators();
+  }, [fetchIndicators]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCurrency, setSelectedCurrency] = useState<CurrencyData | null>(
     null
   );
 
-  const favorites = useFavoritesStore((state) => state.favorites);
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { favorites, toggleFavorite } = useFavoritesStore();
 
   const handleToggleFavorite = useCallback(
     (id: string) => {
@@ -47,19 +46,17 @@ export default function Currencies() {
   );
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refreshCurrencies();
-    setRefreshing(false);
-  }, [refreshCurrencies]);
+    await fetchIndicators();
+  }, [fetchIndicators]);
 
-  function handleOpenModal(item: CurrencyData) {
+  const handleOpenModal = useCallback((item: CurrencyData) => {
     setSelectedCurrency(item);
     setModalVisible(true);
-  }
+  }, []);
 
-  function handleCloseModal() {
+  const handleCloseModal = useCallback(() => {
     setModalVisible(false);
-  }
+  }, []);
 
   const renderCurrencyCard = useCallback(
     ({ item }: { item: CurrencyData }) => (
@@ -73,10 +70,10 @@ export default function Currencies() {
         onToggleFavorite={handleToggleFavorite}
       />
     ),
-    [favorites, handleToggleFavorite]
+    [favorites, handleToggleFavorite, handleOpenModal]
   );
 
-  if (loading && !currencies) {
+  if (loading && currencies.length === 0) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -85,14 +82,14 @@ export default function Currencies() {
     );
   }
 
-  if (error && !currencies) {
+  if (error && currencies.length === 0) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>Erro ao carregar os dados.</Text>
         <Text style={styles.errorText}>{error}</Text>
         <Button
           title="Tentar Novamente"
-          onPress={refreshCurrencies}
+          onPress={onRefresh}
           color={colors.primary}
         />
       </View>
@@ -105,24 +102,32 @@ export default function Currencies() {
         initialNumToRender={10}
         windowSize={5}
         maxToRenderPerBatch={10}
-        data={currencies || []}
+        data={currencies}
         keyExtractor={(item) => item.id}
         renderItem={renderCurrencyCard}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text>Nenhuma moeda encontrada.</Text>
-          </View>
+          !loading ? (
+            <View style={styles.centered}>
+              <Text>Nenhuma moeda encontrada.</Text>
+            </View>
+          ) : null
         }
       />
 
-      <DetailsModal
-        visible={modalVisible}
-        onClose={handleCloseModal}
-        title={selectedCurrency?.name || "Detalhes da Moeda"}
-      >
-        {selectedCurrency && (
+      {selectedCurrency && (
+        <DetailsModal
+          visible={modalVisible}
+          onClose={handleCloseModal}
+          title={selectedCurrency.name}
+        >
           <>
             <Text style={styles.modalText}>
               Compra: R$ {selectedCurrency.buy.toFixed(2)}
@@ -137,12 +142,11 @@ export default function Currencies() {
 
             <HistoricalChart currencyCode={selectedCurrency.code} />
           </>
-        )}
-      </DetailsModal>
+        </DetailsModal>
+      )}
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   centered: {
     flex: 1,

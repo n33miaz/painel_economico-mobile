@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   StyleSheet,
@@ -7,37 +7,37 @@ import {
   Text,
   Button,
   LayoutAnimation,
+  RefreshControl,
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import useApiData from "../hooks/useApiData";
 import { IndexData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
+import { useIndicatorStore } from "../store/indicatorStore";
 
 const DESIRED_INDEXES = ["IBOVESPA", "CDI", "SELIC"];
 
 export default function Indexes() {
-  const {
-    data: indexes,
-    loading,
-    error,
-    fetchData: refreshData,
-  } = useApiData<IndexData>(
-    "/indicators/all",
-    "@indexes",
-    isIndexData,
-    10 * 60 * 1000,
-    (item) => DESIRED_INDEXES.includes(item.name)
+  const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
+
+  const indexes = useMemo(
+    () =>
+      indicators
+        .filter(isIndexData)
+        .filter((item) => DESIRED_INDEXES.includes(item.name)), 
+    [indicators]
   );
 
-  const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    fetchIndicators();
+  }, [fetchIndicators]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null);
 
-  const favorites = useFavoritesStore((state) => state.favorites);
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { favorites, toggleFavorite } = useFavoritesStore();
 
   const handleToggleFavorite = useCallback(
     (id: string) => {
@@ -48,19 +48,17 @@ export default function Indexes() {
   );
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await refreshData();
-    setRefreshing(false);
-  }, [refreshData]);
+    await fetchIndicators();
+  }, [fetchIndicators]);
 
-  function handleOpenModal(item: IndexData) {
+  const handleOpenModal = useCallback((item: IndexData) => {
     setSelectedIndex(item);
     setModalVisible(true);
-  }
+  }, []);
 
-  function handleCloseModal() {
+  const handleCloseModal = useCallback(() => {
     setModalVisible(false);
-  }
+  }, []);
 
   const renderIndexCard = useCallback(
     ({ item }: { item: IndexData }) => (
@@ -75,10 +73,10 @@ export default function Indexes() {
         onToggleFavorite={handleToggleFavorite}
       />
     ),
-    [favorites, handleToggleFavorite]
+    [favorites, handleToggleFavorite, handleOpenModal]
   );
 
-  if (loading && !indexes) {
+  if (loading && indexes.length === 0) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -87,7 +85,7 @@ export default function Indexes() {
     );
   }
 
-  if (error && !indexes) {
+  if (error && indexes.length === 0) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>
@@ -95,7 +93,7 @@ export default function Indexes() {
         </Text>
         <Button
           title="Tentar Novamente"
-          onPress={refreshData}
+          onPress={onRefresh}
           color={colors.primary}
         />
       </View>
@@ -105,15 +103,23 @@ export default function Indexes() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={indexes || []}
+        data={indexes}
         keyExtractor={(item) => item.id}
         renderItem={renderIndexCard}
-        onRefresh={onRefresh}
-        refreshing={refreshing}
+        refreshControl={
+          <RefreshControl
+            refreshing={loading}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text>Nenhum índice encontrado.</Text>
-          </View>
+          !loading ? (
+            <View style={styles.centered}>
+              <Text>Nenhum índice encontrado.</Text>
+            </View>
+          ) : null
         }
       />
 
@@ -123,14 +129,16 @@ export default function Indexes() {
           onClose={handleCloseModal}
           title={selectedIndex.name}
         >
-          {selectedIndex.points !== undefined && (
+          <>
+            {selectedIndex.points !== undefined && (
+              <Text style={styles.modalText}>
+                Pontos: {selectedIndex.points.toFixed(2)}
+              </Text>
+            )}
             <Text style={styles.modalText}>
-              Pontos: {selectedIndex.points.toFixed(2)}
+              Variação: {selectedIndex.variation.toFixed(2)}%
             </Text>
-          )}
-          <Text style={styles.modalText}>
-            Variação: {selectedIndex.variation.toFixed(2)}%
-          </Text>
+          </>
         </DetailsModal>
       )}
     </View>
