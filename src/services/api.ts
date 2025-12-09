@@ -1,73 +1,53 @@
 import axios from "axios";
 import { API_BASE_URL } from "@env";
-import { Identifiable } from "../hooks/useApiData";
-
-if (!API_BASE_URL) {
-  console.error(
-    "A variável de ambiente API_BASE_URL não está definida. Verifique seu arquivo .env"
-  );
-}
 
 const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL || "http://10.0.2.2:8080/api",
 });
 
 export default api;
 
 // --- Interfaces ---
 
-export interface CurrencyData extends Identifiable {
-  code: string;
-  name: string;
-  buy: number;
+export interface Indicator {
+  id: string; 
+  type: "currency" | "index";
+  code: string; 
+  name: string; 
+  buy: number; 
   sell: number | null;
-  variation: number;
-}
-
-export interface IndexData extends Identifiable {
-  name: string;
-  location: string;
-  points: number;
-  variation: number;
+  variation: number; 
+  location?: string;
+  points?: number;
 }
 
 export interface NewsArticle {
+  source: { id: string | null; name: string };
+  author: string | null;
   title: string;
   description: string | null;
   url: string;
   urlToImage: string | null;
   publishedAt: string;
-  source: {
-    name: string;
-  };
+  content: string | null;
 }
 
 export interface HistoricalDataPoint {
   timestamp: string;
-  high: string;
+  high: number;
 }
 
 // --- Type Guards ---
 
-export function isCurrencyData(item: any): item is CurrencyData {
-  return (
-    item &&
-    typeof item.code === "string" &&
-    typeof item.name === "string" &&
-    typeof item.buy !== "undefined" &&
-    typeof item.variation !== "undefined"
-  );
+export function isCurrencyData(item: Indicator): boolean {
+  return item.type === "currency";
 }
 
-export function isIndexData(item: any): item is IndexData {
-  return (
-    item &&
-    typeof item.name === "string" &&
-    typeof item.variation !== "undefined"
-  );
+export function isIndexData(item: Indicator): boolean {
+  return item.type === "index";
 }
 
-// --- Funções de Serviço ---
+// --- Serviços ---
 
 export const getHistoricalData = async (
   currencyCode: string,
@@ -77,16 +57,9 @@ export const getHistoricalData = async (
     const response = await api.get(`/indicators/historical/${currencyCode}`, {
       params: { days },
     });
-
-    if (response.status === 200 && Array.isArray(response.data)) {
-      return response.data;
-    }
-    return [];
+    return response.data;
   } catch (error) {
-    console.error(
-      `Erro ao buscar dados históricos para ${currencyCode}:`,
-      error
-    );
-    throw error;
+    console.error(`Erro histórico ${currencyCode}:`, error);
+    return [];
   }
 };

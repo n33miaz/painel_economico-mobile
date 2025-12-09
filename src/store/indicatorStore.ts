@@ -1,8 +1,5 @@
 import { create } from "zustand";
-import api, { isCurrencyData, isIndexData } from "../services/api";
-import { CurrencyData, IndexData } from "../services/api";
-
-type Indicator = CurrencyData | IndexData;
+import api, { Indicator } from "../services/api";
 
 interface IndicatorState {
   indicators: Indicator[];
@@ -11,31 +8,26 @@ interface IndicatorState {
   fetchIndicators: () => Promise<void>;
 }
 
-const processData = (data: any[]): Indicator[] => {
-  return data.map((item: any) => ({
-    ...item,
-    id: isCurrencyData(item) ? `currency_${item.code}` : `index_${item.name}`,
-  }));
-};
-
 export const useIndicatorStore = create<IndicatorState>((set, get) => ({
   indicators: [],
   loading: false,
   error: null,
   fetchIndicators: async () => {
-    if (get().indicators.length > 0 || get().loading) {
+    if (get().indicators.length > 0 && !get().error) {
       return;
     }
 
     set({ loading: true, error: null });
     try {
-      const response = await api.get("/indicators/all");
-      const dataArray = Object.values(response.data);
-      const processed = processData(dataArray);
+      const response = await api.get<Indicator[]>("/indicators/all");
 
-      set({ indicators: processed, loading: false });
+      set({ indicators: response.data, loading: false });
     } catch (e: any) {
-      set({ error: e.message || "Ocorreu um erro", loading: false });
+      console.error("Erro ao buscar indicadores:", e);
+      set({
+        error: "Não foi possível conectar ao servidor.",
+        loading: false,
+      });
     }
   },
 }));
