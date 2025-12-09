@@ -12,7 +12,7 @@ import {
 import { colors } from "../theme/colors";
 import NewsCard from "../components/NewsCard";
 import useNewsData from "../hooks/useNewsData";
-import { NewsArticle } from "../services/newsApi";
+import { NewsArticle } from "../services/api";
 
 export default function News() {
   const { articles, loading, error, fetchNews } = useNewsData({ pageSize: 20 });
@@ -30,7 +30,7 @@ export default function News() {
     []
   );
 
-  if (loading) {
+  if (loading && !articles?.length) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -39,7 +39,7 @@ export default function News() {
     );
   }
 
-  if (error) {
+  if (error && !articles?.length) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
@@ -67,6 +67,13 @@ export default function News() {
         ListHeaderComponent={
           <Text style={styles.headerTitle}>Principais Notícias</Text>
         }
+        ListEmptyComponent={
+          !loading ? (
+            <View style={styles.centered}>
+              <Text>Nenhuma notícia encontrada.</Text>
+            </View>
+          ) : null
+        }
       />
     </SafeAreaView>
   );
@@ -79,6 +86,7 @@ const styles = StyleSheet.create({
   },
   centered: {
     flex: 1,
+    padding: 20,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: colors.background,
@@ -90,6 +98,7 @@ const styles = StyleSheet.create({
   errorText: {
     color: colors.danger,
     fontSize: 16,
+    textAlign: "center",
   },
   headerTitle: {
     fontSize: 32,

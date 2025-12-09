@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Linking,
 } from "react-native";
 import Constants from "expo-constants";
+import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
 import useApiData from "../hooks/useApiData";
@@ -24,8 +25,8 @@ export default function Home({ navigation }: any) {
     loading: highlightsLoading,
     error: highlightsError,
   } = useApiData<CurrencyData>(
-    "/all",
-    "@highlights",
+    "/indicators/all",
+    "@home_highlights",
     isCurrencyData,
     5 * 60 * 1000,
     (item) => HIGHLIGHT_ITEMS.includes(item.code)
@@ -35,7 +36,7 @@ export default function Home({ navigation }: any) {
 
   const isContentLoading = highlightsLoading || newsLoading;
 
-  const getIconForCode = (code: string) => {
+  const getIconForCode = (code: string): keyof typeof Ionicons.glyphMap => {
     switch (code) {
       case "USD":
         return "logo-usd";
@@ -49,13 +50,16 @@ export default function Home({ navigation }: any) {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ flexGrow: 1 }}
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.subtitle}>Resumo do mercado hoje</Text>
       </View>
 
-      {isContentLoading ? (
+      {isContentLoading && !highlights ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
@@ -87,18 +91,22 @@ export default function Home({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {news.map((article) => (
-              <TouchableOpacity
-                key={article.url}
-                style={styles.newsItem}
-                onPress={() => Linking.openURL(article.url)}
-              >
-                <Text style={styles.newsSource}>{article.source.name}</Text>
-                <Text style={styles.newsTitle} numberOfLines={2}>
-                  {article.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {news.length > 0 ? (
+              news.map((article) => (
+                <TouchableOpacity
+                  key={article.url}
+                  style={styles.newsItem}
+                  onPress={() => Linking.openURL(article.url)}
+                >
+                  <Text style={styles.newsSource}>{article.source.name}</Text>
+                  <Text style={styles.newsTitle} numberOfLines={2}>
+                    {article.title}
+                  </Text>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <Text style={styles.errorText}>Nenhuma notícia encontrada.</Text>
+            )}
           </View>
         </>
       )}
@@ -113,9 +121,10 @@ const styles = StyleSheet.create({
     paddingTop: Constants.statusBarHeight,
   },
   loadingContainer: {
-    marginTop: 40,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    paddingVertical: 40,
   },
   header: {
     paddingHorizontal: 24,
@@ -129,16 +138,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     color: colors.textSecondary,
+    fontFamily: "Roboto_400Regular",
     marginTop: 4,
   },
   highlightRow: {
     paddingHorizontal: 16,
     flexDirection: "row",
+    justifyContent: "center",
   },
   errorText: {
     textAlign: "center",
-    color: colors.danger,
-    marginTop: 40,
+    color: colors.textSecondary,
+    marginTop: 20,
+    paddingHorizontal: 24,
+    fontFamily: "Roboto_400Regular",
   },
   section: {
     marginTop: 32,
@@ -158,22 +171,29 @@ const styles = StyleSheet.create({
   seeAll: {
     fontSize: 14,
     color: colors.primary,
-    fontWeight: "bold",
+    fontFamily: "Roboto_700Bold",
   },
   newsItem: {
     backgroundColor: colors.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   newsSource: {
     color: colors.textSecondary,
     fontSize: 12,
+    fontFamily: "Roboto_400Regular",
     marginBottom: 4,
   },
   newsTitle: {
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Roboto_700Bold",
+    lineHeight: 22,
   },
 });

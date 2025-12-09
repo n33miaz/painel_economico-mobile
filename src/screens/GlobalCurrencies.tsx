@@ -26,7 +26,7 @@ export default function GlobalCurrencies() {
     error,
     fetchData: refreshData,
   } = useApiData<CurrencyData>(
-    "/all",
+    "/indicators/all",
     "@global_currencies",
     isCurrencyData,
     10 * 60 * 1000,
@@ -80,7 +80,7 @@ export default function GlobalCurrencies() {
     [favorites, handleToggleFavorite, handleOpenModal]
   );
 
-  if (loading && !isRefreshing) {
+  if (loading && !currencies) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -89,7 +89,7 @@ export default function GlobalCurrencies() {
     );
   }
 
-  if (error) {
+  if (error && !currencies) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>
@@ -107,18 +107,20 @@ export default function GlobalCurrencies() {
   return (
     <View style={styles.container}>
       <FlatList
-        initialNumToRender={10}
-        windowSize={5}
-        maxToRenderPerBatch={10}
+        initialNumToRender={5}
+        windowSize={3}
+        maxToRenderPerBatch={5}
         data={currencies || []}
         keyExtractor={(item) => item.id}
         renderItem={renderCurrencyCard}
         onRefresh={handleRefresh}
         refreshing={isRefreshing}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text>Nenhuma moeda global encontrada.</Text>
-          </View>
+          !loading ? (
+            <View style={styles.centered}>
+              <Text>Nenhuma moeda global encontrada.</Text>
+            </View>
+          ) : null
         }
       />
 
@@ -138,7 +140,8 @@ export default function GlobalCurrencies() {
           <Text style={styles.modalText}>
             Variação: {selectedCurrency.variation.toFixed(2)}%
           </Text>
-          <HistoricalChart currencyCode={selectedCurrency.id} />
+
+          <HistoricalChart currencyCode={selectedCurrency.code} />
         </DetailsModal>
       )}
     </View>

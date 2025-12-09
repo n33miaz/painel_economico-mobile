@@ -31,21 +31,21 @@ export default function Favorites() {
     loading,
     fetchData: refreshAllData,
   } = useApiData<CombinedData>(
-    "/all",
-    "@all_data_for_favorites",
+    "/indicators/all",
+    "@all_indicators",
     (item): item is CombinedData => isCurrencyData(item) || isIndexData(item)
   );
 
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<CombinedData | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const favorites = useFavoritesStore((state) => state.favorites);
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
-  const [refreshing, setRefreshing] = useState(false);
-
   const handleToggleFavorite = useCallback(
     (id: string) => {
+      // Animação suave ao remover um item da lista
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       toggleFavorite(id);
     },
@@ -94,16 +94,15 @@ export default function Favorites() {
         />
       );
     },
-    [favorites, handleToggleFavorite]
+    [handleToggleFavorite]
   );
 
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        initialNumToRender={10}
-        windowSize={5}
-        maxToRenderPerBatch={10}
         data={favoriteItems}
+        keyExtractor={(item) => item.id}
+        renderItem={renderFavoriteCard}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -112,8 +111,6 @@ export default function Favorites() {
             tintColor={colors.primary}
           />
         }
-        keyExtractor={(item) => item.id}
-        renderItem={renderFavoriteCard}
         ListHeaderComponent={
           <Text style={styles.headerTitle}>Meus Favoritos</Text>
         }
@@ -151,7 +148,7 @@ export default function Favorites() {
           </Text>
 
           {isCurrencyData(selectedItem) && (
-            <HistoricalChart currencyCode={selectedItem.id} />
+            <HistoricalChart currencyCode={selectedItem.code} />
           )}
         </DetailsModal>
       )}

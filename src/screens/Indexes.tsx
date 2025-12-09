@@ -25,7 +25,7 @@ export default function Indexes() {
     error,
     fetchData: refreshData,
   } = useApiData<IndexData>(
-    "/all",
+    "/indicators/all",
     "@indexes",
     isIndexData,
     10 * 60 * 1000,
@@ -40,9 +40,9 @@ export default function Indexes() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const handleToggleFavorite = useCallback(
-    (code: string) => {
+    (id: string) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      toggleFavorite(code);
+      toggleFavorite(id);
     },
     [toggleFavorite]
   );
@@ -67,9 +67,9 @@ export default function Indexes() {
       <IndicatorCard
         name={item.name}
         id={item.id}
-        value={item.points || item.variation}
+        value={item.points || 0}
         variation={item.variation}
-        symbol={item.name !== "IBOVESPA" ? "" : "pts"}
+        symbol={item.name === "IBOVESPA" ? "pts" : "%"}
         isFavorite={favorites.includes(item.id)}
         onPress={() => handleOpenModal(item)}
         onToggleFavorite={handleToggleFavorite}
@@ -105,9 +105,6 @@ export default function Indexes() {
   return (
     <View style={styles.container}>
       <FlatList
-        initialNumToRender={10}
-        windowSize={5}
-        maxToRenderPerBatch={10}
         data={indexes || []}
         keyExtractor={(item) => item.id}
         renderItem={renderIndexCard}
@@ -115,7 +112,7 @@ export default function Indexes() {
         refreshing={refreshing}
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text style={styles.loadingText}>Nenhum índice encontrado.</Text>
+            <Text>Nenhum índice encontrado.</Text>
           </View>
         }
       />

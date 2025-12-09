@@ -23,7 +23,11 @@ export default function Currencies() {
     loading,
     error,
     fetchData: refreshCurrencies,
-  } = useApiData<CurrencyData>("/all", "@currencies", isCurrencyData);
+  } = useApiData<CurrencyData>(
+    "/indicators/all",
+    "@currencies",
+    isCurrencyData
+  );
 
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -35,9 +39,9 @@ export default function Currencies() {
   const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
 
   const handleToggleFavorite = useCallback(
-    (code: string) => {
+    (id: string) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      toggleFavorite(code);
+      toggleFavorite(id);
     },
     [toggleFavorite]
   );
@@ -130,7 +134,8 @@ export default function Currencies() {
             <Text style={styles.modalText}>
               Variação: {selectedCurrency.variation.toFixed(2)}%
             </Text>
-            <HistoricalChart currencyCode={selectedCurrency.id} />
+
+            <HistoricalChart currencyCode={selectedCurrency.code} />
           </>
         )}
       </DetailsModal>
