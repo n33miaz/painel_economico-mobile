@@ -4,20 +4,31 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface FavoritesState {
   favorites: string[];
-  toggleFavorite: (code: string) => void;
 }
 
+interface FavoritesActions {
+  toggleFavorite: (id: string) => void;
+  isFavorite: (id: string) => boolean;
+}
+
+type FavoritesStore = FavoritesState & FavoritesActions;
+
 export const useFavoritesStore = create(
-  persist<FavoritesState>(
+  persist<FavoritesStore>(
     (set, get) => ({
       favorites: [],
-      toggleFavorite: (code: string) => {
-        const currentFavorites = get().favorites;
-        const isFavorite = currentFavorites.includes(code);
 
-        const newFavorites = isFavorite
-          ? currentFavorites.filter((fav) => fav !== code)
-          : [...currentFavorites, code];
+      isFavorite: (id: string) => {
+        return get().favorites.includes(id);
+      },
+
+      toggleFavorite: (id: string) => {
+        const isCurrentlyFavorite = get().isFavorite(id);
+
+        const currentFavorites = get().favorites;
+        const newFavorites = isCurrentlyFavorite
+          ? currentFavorites.filter((favId) => favId !== id)
+          : [...currentFavorites, id];
 
         set({ favorites: newFavorites });
       },

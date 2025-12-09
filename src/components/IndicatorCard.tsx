@@ -1,5 +1,11 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  GestureResponderEvent,
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
@@ -15,60 +21,73 @@ interface IndicatorCardProps {
   symbol?: string;
 }
 
-export default function IndicatorCard({
-  name,
-  id,
-  value,
-  variation,
-  isFavorite,
-  onPress,
-  onToggleFavorite,
-  symbol = "R$",
-}: IndicatorCardProps) {
-  const isPositive = variation >= 0;
-  const variationColor = isPositive ? colors.success : colors.danger;
+const IndicatorCard: React.FC<IndicatorCardProps> = React.memo(
+  ({
+    name,
+    id,
+    value,
+    variation,
+    isFavorite,
+    onPress,
+    onToggleFavorite,
+    symbol = "R$",
+  }) => {
+    const variationStyle = useMemo(() => {
+      const isPositive = variation >= 0;
+      return {
+        color: isPositive ? colors.success : colors.danger,
+        icon: (isPositive
+          ? "arrow-up"
+          : "arrow-down") as keyof typeof Ionicons.glyphMap,
+      };
+    }, [variation]);
 
-  const handleFavoritePress = (e: any) => {
-    e.stopPropagation();
-    onToggleFavorite(id);
-  };
+    const displayName = useMemo(() => name.split("/")[0], [name]);
 
-  return (
-    <TouchableOpacity style={styles.card} onPress={onPress}>
-      <View style={styles.content}>
-        <Text style={styles.cardTitle}>{name.split("/")[0]}</Text>
-        <Text style={styles.cardValue}>
-          {symbol} {value.toFixed(2)}
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        <View
-          style={[
-            styles.variationContainer,
-            { backgroundColor: variationColor },
-          ]}
-        >
-          <Ionicons
-            name={isPositive ? "arrow-up" : "arrow-down"}
-            size={16}
-            color={colors.textLight}
-          />
-          <Text style={styles.variationText}>{variation.toFixed(2)}%</Text>
+    const handleFavoritePress = (e: GestureResponderEvent) => {
+      e.stopPropagation();
+      onToggleFavorite(id);
+    };
+
+    return (
+      <TouchableOpacity style={styles.card} onPress={onPress}>
+        <View style={styles.content}>
+          <Text style={styles.cardTitle}>{displayName}</Text>
+          <Text style={styles.cardValue}>
+            {symbol} {value.toFixed(2)}
+          </Text>
         </View>
-        <TouchableOpacity
-          onPress={handleFavoritePress}
-          style={styles.starButton}
-        >
-          <Ionicons
-            name={isFavorite ? "star" : "star-outline"}
-            size={28}
-            color={isFavorite ? colors.warning : colors.inactive}
-          />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-}
+        <View style={styles.actions}>
+          <View
+            style={[
+              styles.variationContainer,
+              { backgroundColor: variationStyle.color },
+            ]}
+          >
+            <Ionicons
+              name={variationStyle.icon}
+              size={16}
+              color={colors.textLight}
+            />
+            <Text style={styles.variationText}>{variation.toFixed(2)}%</Text>
+          </View>
+          <TouchableOpacity
+            onPress={handleFavoritePress}
+            style={styles.starButton}
+          >
+            <Ionicons
+              name={isFavorite ? "star" : "star-outline"}
+              size={28}
+              color={isFavorite ? colors.warning : colors.inactive}
+            />
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+);
+
+export default IndicatorCard;
 
 const styles = StyleSheet.create({
   card: {
@@ -91,13 +110,14 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Roboto_700Bold",
     color: colors.textPrimary,
   },
   cardValue: {
     fontSize: 22,
     color: colors.textSecondary,
     marginTop: 4,
+    fontFamily: "Roboto_400Regular",
   },
   actions: {
     flexDirection: "row",
@@ -113,7 +133,7 @@ const styles = StyleSheet.create({
   variationText: {
     color: colors.textLight,
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Roboto_700Bold",
     marginLeft: 4,
   },
   starButton: {

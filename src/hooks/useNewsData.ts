@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 
-import newsApi, { NewsArticle } from "../services/newsApi";
+import api from "../services/api"; 
+import { NewsArticle } from "../services/api";
 
 interface UseNewsDataParams {
   country?: string;
@@ -28,7 +29,8 @@ export default function useNewsData({
     try {
       setLoading(true);
       setError(null);
-      const response = await newsApi.get("/top-headlines", {
+      
+      const response = await api.get("/news/top-headlines", {
         params: { country, category, pageSize },
       });
       setArticles(response.data.articles);
