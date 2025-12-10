@@ -21,7 +21,7 @@ import { useIndicatorStore } from "../store/indicatorStore";
 interface AssetListScreenProps {
   data: Indicator[];
   emptyMessage: string;
-  symbol?: string; // "R$", "pts", "%"
+  symbol?: string;
 }
 
 export default function AssetListScreen({
