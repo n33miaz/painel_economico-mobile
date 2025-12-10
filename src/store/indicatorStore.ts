@@ -1,20 +1,24 @@
 import { create } from "zustand";
-import api, { Indicator } from "../services/api";
+import api, { Indicator, isCurrencyData, isIndexData } from "../services/api";
 
 interface IndicatorState {
   indicators: Indicator[];
   loading: boolean;
   error: string | null;
   fetchIndicators: () => Promise<void>;
+  getCurrencies: () => Indicator[];
+  getIndexes: () => Indicator[];
+  getGlobalCurrencies: (targetCodes: string[]) => Indicator[];
 }
 
 export const useIndicatorStore = create<IndicatorState>((set, get) => ({
   indicators: [],
   loading: false,
   error: null,
+
   fetchIndicators: async () => {
     if (get().indicators.length > 0 && !get().error) {
-      return;
+      // TODO: lógica de expiração de tempo aqui
     }
 
     set({ loading: true, error: null });
@@ -28,5 +32,19 @@ export const useIndicatorStore = create<IndicatorState>((set, get) => ({
         loading: false,
       });
     }
+  },
+
+  getCurrencies: () => {
+    return get().indicators.filter(isCurrencyData);
+  },
+
+  getIndexes: () => {
+    return get().indicators.filter(isIndexData);
+  },
+
+  getGlobalCurrencies: (targetCodes: string[]) => {
+    return get()
+      .indicators.filter(isCurrencyData)
+      .filter((item) => targetCodes.includes(item.code));
   },
 }));
