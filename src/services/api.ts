@@ -1,8 +1,10 @@
 import axios from "axios";
 import { API_BASE_URL } from "@env";
 
+const DEV_URL = "http://10.201.3.1:8080/api"; 
+
 const api = axios.create({
-  baseURL: API_BASE_URL || "http://10.0.2.2:8080/api",
+  baseURL: API_BASE_URL || DEV_URL,
 });
 
 export default api;
