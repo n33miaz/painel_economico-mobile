@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
   RefreshControl,
+  Button,
 } from "react-native";
 
 import { colors } from "../theme/colors";
@@ -15,7 +16,7 @@ import useNewsData from "../hooks/useNewsData";
 import { NewsArticle } from "../services/api";
 
 export default function News() {
-  const { articles, loading, error, fetchNews } = useNewsData({ pageSize: 20 });
+  const { articles, loading, error, fetchNews } = useNewsData();
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,6 +44,13 @@ export default function News() {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
+        <View style={styles.buttonContainer}>
+          <Button
+            title="Tentar Novamente"
+            onPress={fetchNews}
+            color={colors.primary}
+          />
+        </View>
       </View>
     );
   }
@@ -50,11 +58,11 @@ export default function News() {
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        initialNumToRender={10}
-        windowSize={5}
-        maxToRenderPerBatch={10}
+        initialNumToRender={5}
+        windowSize={3}
+        maxToRenderPerBatch={5}
         data={articles}
-        keyExtractor={(item) => item.url}
+        keyExtractor={(item, index) => `${item.url}-${index}`}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -70,9 +78,12 @@ export default function News() {
         ListEmptyComponent={
           !loading ? (
             <View style={styles.centered}>
-              <Text>Nenhuma notícia encontrada.</Text>
+              <Text style={styles.emptyText}>Nenhuma notícia encontrada.</Text>
             </View>
           ) : null
+        }
+        contentContainerStyle={
+          articles?.length === 0 ? styles.listContentEmpty : undefined
         }
       />
     </SafeAreaView>
@@ -91,14 +102,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.background,
   },
+  listContentEmpty: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
   loadingText: {
     marginTop: 10,
     color: colors.textSecondary,
+    fontFamily: "Roboto_400Regular",
   },
   errorText: {
     color: colors.danger,
     fontSize: 16,
     textAlign: "center",
+    marginBottom: 16,
+    fontFamily: "Roboto_400Regular",
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 16,
+    fontFamily: "Roboto_400Regular",
   },
   headerTitle: {
     fontSize: 32,
@@ -106,5 +129,8 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     marginHorizontal: 16,
     marginVertical: 20,
+  },
+  buttonContainer: {
+    marginTop: 10,
   },
 });

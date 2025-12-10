@@ -1,9 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-  import api, { NewsArticle } from "../services/api";
+import api, { NewsArticle } from "../services/api";
 
 interface UseNewsDataParams {
   country?: string;
   category?: string;
+}
+
+interface NewsResponse {
+  status: string;
+  totalResults: number;
+  articles: NewsArticle[];
 }
 
 export default function useNewsData({
@@ -19,14 +25,14 @@ export default function useNewsData({
       setLoading(true);
       setError(null);
 
-      const response = await api.get("/news/top-headlines", {
+      const response = await api.get<NewsResponse>("/news/top-headlines", {
         params: { country, category },
       });
 
       setArticles(response.data.articles);
     } catch (e: any) {
-      setError("Erro ao carregar notícias.");
-      console.error(e);
+      console.error("Erro ao buscar notícias:", e);
+      setError("Não foi possível carregar as notícias.");
     } finally {
       setLoading(false);
     }
