@@ -50,7 +50,9 @@ export default function News() {
       ) : (
         <FlatList
           data={articles}
-          keyExtractor={(item, index) => `${item.url}-${index}`}
+          keyExtractor={(item, index) =>
+            item.url ? `${item.url}-${index}` : `news-${index}`
+          }
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -63,7 +65,14 @@ export default function News() {
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.centered}>
-              <Text style={styles.emptyText}>Nenhuma notícia encontrada.</Text>
+              <Text style={styles.emptyText}>
+                {error
+                  ? "Não foi possível carregar as notícias."
+                  : "Nenhuma notícia encontrada."}
+              </Text>
+              <TouchableOpacity style={styles.retryButton} onPress={fetchNews}>
+                <Text style={styles.retryText}>Atualizar</Text>
+              </TouchableOpacity>
             </View>
           }
         />

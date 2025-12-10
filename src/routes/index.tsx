@@ -115,7 +115,7 @@ function MainTabScreen() {
             focus: () => setActiveTab("Dashboard"),
           }}
           options={{
-            tabBarLabel: "Início",
+            tabBarLabel: "Dashboard",
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={focused ? "grid" : "grid-outline"}

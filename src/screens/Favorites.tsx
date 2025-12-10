@@ -124,7 +124,7 @@ export default function Favorites({ navigation }: any) {
                 <TouchableOpacity
                   style={styles.ctaButton}
                   onPress={() =>
-                    navigation.navigate("Início", { screen: "Moedas" })
+                    navigation.navigate("Início", { screen: "Dashboard" })
                   }
                 >
                   <Text style={styles.ctaButtonText}>Explorar Mercado</Text>

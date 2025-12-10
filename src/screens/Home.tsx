@@ -19,7 +19,7 @@ import HighlightCard from "../components/HighlightCard";
 import PageContainer from "../components/PageContainer";
 import { useIndicatorStore } from "../store/indicatorStore";
 
-const HIGHLIGHT_ITEMS = ["USD", "EUR", "JPY"];
+const HIGHLIGHT_ITEMS = ["USD", "EUR", "JPY", "GBP"];
 
 export default function Home() {
   const navigation = useNavigation();
