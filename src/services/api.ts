@@ -1,7 +1,11 @@
 import axios from "axios";
+import { Platform } from "react-native";
 import { API_BASE_URL } from "@env";
 
-const DEV_URL = "http://10.201.3.1:8080/api"; 
+const DEV_URL =
+  Platform.OS === "web"
+    ? "http://localhost:8080/api"
+    : "http://10.201.3.1:8080/api";
 
 const api = axios.create({
   baseURL: API_BASE_URL || DEV_URL,

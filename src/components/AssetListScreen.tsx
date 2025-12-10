@@ -109,7 +109,7 @@ export default function AssetListScreen({
     <View style={styles.container}>
       <FlatList
         data={data}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `${item.id}-${index}`}
         renderItem={renderItem}
         refreshControl={
           <RefreshControl
