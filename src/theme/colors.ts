@@ -14,6 +14,6 @@ export const colors = {
   inactive: "gray",
   transparent: "rgba(0,0,0,0.5)",
 
-  linkedinBlue: '#0A66C2',
-  githubDark: '#181717'
+  linkedinBlue: "#0A66C2",
+  githubDark: "#181717",
 };

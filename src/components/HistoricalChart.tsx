@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useMemo } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 import { LineChart } from "react-native-chart-kit";
 
 import { colors } from "../theme/colors";
-import { getHistoricalData } from "../services/api";
+import { useHistoricalChartData } from "../hooks/useHistoricalChartData";
 
 interface HistoricalChartProps {
   currencyCode: string;
@@ -20,49 +20,27 @@ const screenWidth = Dimensions.get("window").width;
 export default function HistoricalChart({
   currencyCode,
 }: HistoricalChartProps) {
-  const [chartData, setChartData] = useState<{
-    labels: string[];
-    datasets: { data: number[] }[];
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, loading, error } = useHistoricalChartData(currencyCode);
 
-  useEffect(() => {
-    const fetchChartData = async () => {
-      if (!currencyCode) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        const historicalData = await getHistoricalData(currencyCode);
-
-        if (historicalData.length === 0) {
-          throw new Error("Dados históricos não disponíveis.");
-        }
-
-        const reversedData = [...historicalData].reverse();
-        const labels = reversedData.map((point) => {
-          const date = new Date(Number(point.timestamp) * 1000);
-          return `${date.getDate()}/${date.getMonth() + 1}`;
-        });
-
-        setChartData({
-          labels: labels,
-          datasets: [
-            {
-              data: reversedData.map((point) => parseFloat(point.high)),
-            },
-          ],
-        });
-      } catch (e: any) {
-        setError(e.message || "Não foi possível carregar o gráfico.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchChartData();
-  }, [currencyCode]);
+  const chartConfig = useMemo(
+    () => ({
+      backgroundColor: colors.cardBackground,
+      backgroundGradientFrom: colors.cardBackground,
+      backgroundGradientTo: colors.cardBackground,
+      decimalPlaces: 2,
+      color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
+      labelColor: (opacity = 1) => `rgba(28, 28, 30, ${opacity})`,
+      style: {
+        borderRadius: 16,
+      },
+      propsForDots: {
+        r: "4",
+        strokeWidth: "2",
+        stroke: colors.primary,
+      },
+    }),
+    []
+  );
 
   if (loading) {
     return (
@@ -72,7 +50,7 @@ export default function HistoricalChart({
     );
   }
 
-  if (error || !chartData) {
+  if (error || !data) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>{error}</Text>
@@ -84,32 +62,16 @@ export default function HistoricalChart({
     <View style={styles.container}>
       <Text style={styles.title}>Variação (Últimos 7 dias)</Text>
       <LineChart
-        data={chartData}
-        width={screenWidth * 0.8}
+        data={data}
+        width={screenWidth * 0.85}
         height={180}
         yAxisLabel="R$ "
         yAxisInterval={1}
-        chartConfig={{
-          backgroundColor: colors.cardBackground,
-          backgroundGradientFrom: colors.cardBackground,
-          backgroundGradientTo: colors.cardBackground,
-          decimalPlaces: 2,
-          color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-          labelColor: (opacity = 1) => `rgba(28, 28, 30, ${opacity})`,
-          style: {
-            borderRadius: 16,
-          },
-          propsForDots: {
-            r: "4",
-            strokeWidth: "2",
-            stroke: colors.primary,
-          },
-        }}
+        chartConfig={chartConfig}
         bezier
-        style={{
-          marginVertical: 8,
-          borderRadius: 16,
-        }}
+        style={styles.chart}
+        withInnerLines={false}
+        withOuterLines={false}
       />
     </View>
   );
@@ -122,10 +84,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     color: colors.textSecondary,
     textAlign: "center",
-    marginBottom: 10,
+    marginBottom: 12,
     fontFamily: "Roboto_700Bold",
   },
   centered: {
@@ -135,5 +97,10 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: colors.danger,
+    fontFamily: "Roboto_400Regular",
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
 });

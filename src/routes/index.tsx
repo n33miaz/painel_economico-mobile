@@ -12,7 +12,7 @@ import GlobalCurrencies from "../screens/GlobalCurrencies";
 import Indexes from "../screens/Indexes";
 import News from "../screens/News";
 import About from "../screens/About";
-import Favorites from '../screens/Favorites';
+import Favorites from "../screens/Favorites";
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();

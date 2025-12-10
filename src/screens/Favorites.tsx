@@ -12,11 +12,7 @@ import {
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import {
-  Indicator,
-  isCurrencyData,
-  isIndexData,
-} from "../services/api";
+import { Indicator, isCurrencyData, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
