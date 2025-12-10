@@ -14,6 +14,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Image,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -156,9 +157,11 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         onPress={() => props.navigation.navigate("Sobre")}
         activeOpacity={0.7}
       >
-        <View style={styles.iconContainer}>
-          <Ionicons name="infinite" size={32} color={colors.primary} />
-        </View>
+        <Image
+          source={require("../../assets/logo.png")}
+          style={styles.drawerLogo}
+          resizeMode="contain"
+        />{" "}
         <View>
           <Text style={styles.appName}>Painel Econômico</Text>
           <Text style={styles.appSlogan}>Soluções Inteligentes</Text>
@@ -293,19 +296,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#F8F9FA",
   },
-  iconContainer: {
+  drawerLogo: {
     width: 48,
     height: 48,
-    backgroundColor: "white",
     borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
     marginRight: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: "white",
   },
   appName: {
     fontSize: 18,

@@ -8,6 +8,7 @@ import {
   ScrollView,
   Animated,
   Dimensions,
+  Image,
 } from "react-native";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
@@ -60,7 +61,10 @@ export default function About() {
         >
           <View style={styles.logoContainer}>
             <View style={styles.iconCircle}>
-              <Ionicons name="infinite" size={50} color={colors.primary} />
+              <Image
+                source={require("../../assets/logo.png")}
+                style={styles.aboutLogo}
+              />{" "}
             </View>
             <Text style={styles.appName}>Painel Econômico</Text>
             <Text style={styles.version}>
@@ -143,6 +147,17 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
+    marginTop: 20,
+  },
+  aboutLogo: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   iconCircle: {
     width: 80,
@@ -220,10 +235,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   linkedinButton: {
-    backgroundColor: colors.linkedinBlue,
+    backgroundColor: colors.primaryDark,
   },
   githubButton: {
-    backgroundColor: colors.githubDark,
+    backgroundColor: colors.textPrimary,
   },
   buttonText: {
     color: "#FFF",
