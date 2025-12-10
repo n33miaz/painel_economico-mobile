@@ -13,8 +13,7 @@ import {
 
 import { colors } from "../theme/colors";
 import {
-  CurrencyData,
-  IndexData,
+  Indicator,
   isCurrencyData,
   isIndexData,
 } from "../services/api";
@@ -23,8 +22,6 @@ import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
-
-type CombinedData = CurrencyData | IndexData;
 
 export default function Favorites() {
   const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
@@ -39,7 +36,7 @@ export default function Favorites() {
   }, [indicators, favorites]);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<CombinedData | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Indicator | null>(null);
 
   const handleToggleFavorite = useCallback(
     (id: string) => {
@@ -53,7 +50,7 @@ export default function Favorites() {
     await fetchIndicators();
   }, [fetchIndicators]);
 
-  const handleOpenModal = useCallback((item: CombinedData) => {
+  const handleOpenModal = useCallback((item: Indicator) => {
     setSelectedItem(item);
     setModalVisible(true);
   }, []);
@@ -64,15 +61,17 @@ export default function Favorites() {
   }, []);
 
   const renderFavoriteCard = useCallback(
-    ({ item }: { item: CombinedData }) => {
+    ({ item }: { item: Indicator }) => {
       const isIndex = isIndexData(item);
       const isCurrency = isCurrencyData(item);
+
+      const displayValue = isIndex ? item.points || 0 : item.buy;
 
       return (
         <IndicatorCard
           name={item.name}
           id={item.id}
-          value={isIndex ? item.points : isCurrency ? item.buy : 0}
+          value={displayValue}
           variation={item.variation}
           isFavorite={true}
           onPress={() => handleOpenModal(item)}
@@ -143,11 +142,14 @@ export default function Favorites() {
           visible={modalVisible}
           onClose={handleCloseModal}
           title={selectedItem.name}
+          currencyCode={
+            isCurrencyData(selectedItem) ? selectedItem.code : undefined
+          }
         >
           <>
             {isIndexData(selectedItem) && (
               <Text style={styles.modalText}>
-                Pontos: {selectedItem.points.toFixed(2)}
+                Pontos: {(selectedItem.points || 0).toFixed(2)}
               </Text>
             )}
             {isCurrencyData(selectedItem) && (

@@ -20,7 +20,6 @@ export const useIndicatorStore = create<IndicatorState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await api.get<Indicator[]>("/indicators/all");
-
       set({ indicators: response.data, loading: false });
     } catch (e: any) {
       console.error("Erro ao buscar indicadores:", e);

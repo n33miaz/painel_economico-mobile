@@ -14,7 +14,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
 import useNewsData from "../hooks/useNewsData";
-import { CurrencyData, isCurrencyData } from "../services/api";
+import { Indicator, isCurrencyData } from "../services/api";
 import HighlightCard from "../components/HighlightCard";
 import { useIndicatorStore } from "../store/indicatorStore";
 
@@ -28,24 +28,24 @@ export default function Home({ navigation }: any) {
     fetchIndicators,
   } = useIndicatorStore();
 
-  const {
-    articles: news,
-    loading: newsLoading,
-    fetchNews,
-  } = useNewsData({ pageSize: 3 });
+  const { articles: news, loading: newsLoading, fetchNews } = useNewsData();
 
   useEffect(() => {
     fetchIndicators();
     fetchNews();
   }, [fetchIndicators, fetchNews]);
 
-  const highlights: CurrencyData[] = useMemo(
+  const highlights: Indicator[] = useMemo(
     () =>
       indicators
         .filter(isCurrencyData)
         .filter((currency) => HIGHLIGHT_ITEMS.includes(currency.code)),
     [indicators]
   );
+
+  const recentNews = useMemo(() => {
+    return news ? news.slice(0, 3) : [];
+  }, [news]);
 
   const isContentLoading = indicatorsLoading || newsLoading;
 
@@ -116,10 +116,10 @@ export default function Home({ navigation }: any) {
               </TouchableOpacity>
             </View>
 
-            {news.length > 0
-              ? news.map((article) => (
+            {recentNews.length > 0
+              ? recentNews.map((article, index) => (
                   <TouchableOpacity
-                    key={article.url}
+                    key={`${article.url}-${index}`}
                     style={styles.newsItem}
                     onPress={() => Linking.openURL(article.url)}
                   >
@@ -183,6 +183,7 @@ const styles = StyleSheet.create({
   section: {
     marginTop: 32,
     paddingHorizontal: 24,
+    paddingBottom: 20,
   },
   sectionHeader: {
     flexDirection: "row",

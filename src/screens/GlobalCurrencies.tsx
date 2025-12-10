@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import { CurrencyData, isCurrencyData } from "../services/api";
+import { Indicator, isCurrencyData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
@@ -36,7 +36,7 @@ export default function GlobalCurrencies() {
   }, [fetchIndicators]);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedCurrency, setSelectedCurrency] = useState<CurrencyData | null>(
+  const [selectedCurrency, setSelectedCurrency] = useState<Indicator | null>(
     null
   );
 
@@ -54,7 +54,7 @@ export default function GlobalCurrencies() {
     await fetchIndicators();
   }, [fetchIndicators]);
 
-  const handleOpenModal = useCallback((item: CurrencyData) => {
+  const handleOpenModal = useCallback((item: Indicator) => {
     setSelectedCurrency(item);
     setModalVisible(true);
   }, []);
@@ -64,7 +64,7 @@ export default function GlobalCurrencies() {
   }, []);
 
   const renderCurrencyCard = useCallback(
-    ({ item }: { item: CurrencyData }) => (
+    ({ item }: { item: Indicator }) => (
       <IndicatorCard
         name={item.name}
         id={item.id}
@@ -133,6 +133,7 @@ export default function GlobalCurrencies() {
           visible={modalVisible}
           onClose={handleCloseModal}
           title={selectedCurrency.name}
+          currencyCode={selectedCurrency.code}
         >
           <>
             <Text style={styles.modalText}>

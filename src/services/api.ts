@@ -10,13 +10,13 @@ export default api;
 // --- Interfaces ---
 
 export interface Indicator {
-  id: string; 
+  id: string;
   type: "currency" | "index";
-  code: string; 
-  name: string; 
-  buy: number; 
+  code: string;
+  name: string;
+  buy: number;
   sell: number | null;
-  variation: number; 
+  variation: number;
   location?: string;
   points?: number;
 }
@@ -37,6 +37,12 @@ export interface HistoricalDataPoint {
   high: number;
 }
 
+export interface ConversionResponse {
+  currency: string;
+  amountBrl: number;
+  result: number;
+}
+
 // --- Type Guards ---
 
 export function isCurrencyData(item: Indicator): boolean {
@@ -54,12 +60,30 @@ export const getHistoricalData = async (
   days: number = 7
 ): Promise<HistoricalDataPoint[]> => {
   try {
-    const response = await api.get(`/indicators/historical/${currencyCode}`, {
-      params: { days },
-    });
+    const response = await api.get<HistoricalDataPoint[]>(
+      `/indicators/historical/${currencyCode}`,
+      {
+        params: { days },
+      }
+    );
     return response.data;
   } catch (error) {
     console.error(`Erro histórico ${currencyCode}:`, error);
     return [];
+  }
+};
+
+export const convertCurrency = async (
+  code: string,
+  amount: number
+): Promise<ConversionResponse | null> => {
+  try {
+    const response = await api.get<ConversionResponse>("/indicators/convert", {
+      params: { code, amount },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Erro na conversão:", error);
+    return null;
   }
 };

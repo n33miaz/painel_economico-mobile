@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { colors } from "../theme/colors";
-import { IndexData, isIndexData } from "../services/api";
+import { Indicator, isIndexData } from "../services/api";
 import IndicatorCard from "../components/IndicatorCard";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
@@ -26,7 +26,7 @@ export default function Indexes() {
     () =>
       indicators
         .filter(isIndexData)
-        .filter((item) => DESIRED_INDEXES.includes(item.name)), 
+        .filter((item) => DESIRED_INDEXES.includes(item.name)),
     [indicators]
   );
 
@@ -35,7 +35,7 @@ export default function Indexes() {
   }, [fetchIndicators]);
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState<IndexData | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<Indicator | null>(null);
 
   const { favorites, toggleFavorite } = useFavoritesStore();
 
@@ -51,7 +51,7 @@ export default function Indexes() {
     await fetchIndicators();
   }, [fetchIndicators]);
 
-  const handleOpenModal = useCallback((item: IndexData) => {
+  const handleOpenModal = useCallback((item: Indicator) => {
     setSelectedIndex(item);
     setModalVisible(true);
   }, []);
@@ -61,7 +61,7 @@ export default function Indexes() {
   }, []);
 
   const renderIndexCard = useCallback(
-    ({ item }: { item: IndexData }) => (
+    ({ item }: { item: Indicator }) => (
       <IndicatorCard
         name={item.name}
         id={item.id}
