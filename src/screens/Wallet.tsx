@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   View,
   Text,
@@ -9,11 +9,26 @@ import {
   TextInput,
   Button,
   Alert,
+  ScrollView,
+  Dimensions,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { PieChart } from "react-native-chart-kit";
+
 import { colors } from "../theme/colors";
 import { useWalletStore, Transaction } from "../store/walletStore";
 import { useIndicatorStore } from "../store/indicatorStore";
+
+const screenWidth = Dimensions.get("window").width;
+
+const CHART_COLORS = [
+  "#FF6384",
+  "#36A2EB",
+  "#FFCE56",
+  "#4BC0C0",
+  "#9966FF",
+  "#FF9F40",
+];
 
 export default function Wallet() {
   const { transactions, addTransaction, removeTransaction } = useWalletStore();
@@ -29,11 +44,44 @@ export default function Wallet() {
     return indicator ? indicator.buy : 0;
   };
 
+  const { totalBalance, chartData } = useMemo(() => {
+    let total = 0;
+    const allocation: Record<string, number> = {};
+
+    transactions.forEach((t) => {
+      const currentPrice = getCurrentPrice(t.currencyCode);
+      const currentVal = t.amount * currentPrice;
+      total += currentVal;
+
+      if (allocation[t.currencyCode]) {
+        allocation[t.currencyCode] += currentVal;
+      } else {
+        allocation[t.currencyCode] = currentVal;
+      }
+    });
+
+    const data = Object.keys(allocation).map((key, index) => ({
+      name: key,
+      population: parseFloat(allocation[key].toFixed(2)),
+      color: CHART_COLORS[index % CHART_COLORS.length],
+      legendFontColor: "#7F7F7F",
+      legendFontSize: 12,
+    }));
+
+    return { totalBalance: total, chartData: data };
+  }, [transactions, indicators]);
+
   const handleAdd = () => {
-    if (!amount || !price) {
+    if (!amount || !price || !code) {
       Alert.alert("Erro", "Preencha todos os campos");
       return;
     }
+
+    if (code.length !== 3) {
+      Alert.alert("Erro", "O código da moeda deve ter 3 letras (ex: USD)");
+      return;
+    }
+
     addTransaction({
       currencyCode: code.toUpperCase(),
       amount: parseFloat(amount.replace(",", ".")),
@@ -43,6 +91,7 @@ export default function Wallet() {
     setModalVisible(false);
     setAmount("");
     setPrice("");
+    setCode("USD");
   };
 
   const renderItem = ({ item }: { item: Transaction }) => {
@@ -50,13 +99,16 @@ export default function Wallet() {
     const totalInvested = item.amount * item.priceAtPurchase;
     const currentValue = item.amount * currentPrice;
     const profit = currentValue - totalInvested;
-    const profitPercent = (profit / totalInvested) * 100;
+    const profitPercent =
+      totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
     const isProfit = profit >= 0;
 
     return (
       <View style={styles.card}>
-        <View style={styles.row}>
-          <Text style={styles.coinTitle}>{item.currencyCode}</Text>
+        <View style={styles.cardHeader}>
+          <View style={styles.coinBadge}>
+            <Text style={styles.coinTitle}>{item.currencyCode}</Text>
+          </View>
           <TouchableOpacity onPress={() => removeTransaction(item.id)}>
             <Ionicons name="trash-outline" size={20} color={colors.danger} />
           </TouchableOpacity>
@@ -64,9 +116,9 @@ export default function Wallet() {
 
         <View style={styles.detailsRow}>
           <View>
-            <Text style={styles.label}>Qtd: {item.amount}</Text>
+            <Text style={styles.label}>Quantidade: {item.amount}</Text>
             <Text style={styles.label}>
-              Pago: R$ {item.priceAtPurchase.toFixed(2)}
+              Preço Médio: R$ {item.priceAtPurchase.toFixed(2)}
             </Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
@@ -77,6 +129,7 @@ export default function Wallet() {
               style={{
                 color: isProfit ? colors.success : colors.danger,
                 fontWeight: "bold",
+                fontSize: 12,
               }}
             >
               {isProfit ? "+" : ""}
@@ -91,57 +144,109 @@ export default function Wallet() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Minha Carteira</Text>
+        <View>
+          <Text style={styles.headerTitle}>Minha Carteira</Text>
+          <Text style={styles.totalBalanceLabel}>Saldo Estimado</Text>
+          <Text style={styles.totalBalanceValue}>
+            R$ {totalBalance.toFixed(2)}
+          </Text>
+        </View>
         <TouchableOpacity
           onPress={() => setModalVisible(true)}
           style={styles.addButton}
         >
-          <Ionicons name="add" size={24} color="#fff" />
+          <Ionicons name="add" size={30} color="#fff" />
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={transactions}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        ListEmptyComponent={
-          <Text style={styles.emptyText}>Nenhum investimento registrado.</Text>
-        }
-      />
+      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
+        {/* Gráfico de Alocação */}
+        {chartData.length > 0 ? (
+          <View style={styles.chartContainer}>
+            <Text style={styles.chartTitle}>Alocação por Moeda</Text>
+            <PieChart
+              data={chartData}
+              width={screenWidth - 40}
+              height={220}
+              chartConfig={{
+                color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+              }}
+              accessor={"population"}
+              backgroundColor={"transparent"}
+              paddingLeft={"15"}
+              center={[10, 0]}
+              absolute
+            />
+          </View>
+        ) : (
+          <View style={styles.emptyChart}>
+            <Ionicons name="pie-chart-outline" size={60} color="#ccc" />
+            <Text style={styles.emptyText}>
+              Adicione ativos para ver o gráfico
+            </Text>
+          </View>
+        )}
+
+        <Text style={styles.sectionTitle}>Transações</Text>
+        <FlatList
+          data={transactions}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          scrollEnabled={false}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>
+              Nenhum investimento registrado.
+            </Text>
+          }
+        />
+      </ScrollView>
 
       <Modal visible={modalVisible} animationType="slide" transparent>
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adicionar Transação</Text>
+            <Text style={styles.modalTitle}>Novo Investimento</Text>
 
+            <Text style={styles.inputLabel}>Moeda (Código)</Text>
             <TextInput
               style={styles.input}
-              placeholder="Moeda (ex: USD)"
+              placeholder="Ex: USD, EUR"
               value={code}
               onChangeText={setCode}
               autoCapitalize="characters"
+              maxLength={3}
             />
+
+            <Text style={styles.inputLabel}>Quantidade</Text>
             <TextInput
               style={styles.input}
-              placeholder="Quantidade"
+              placeholder="0.00"
               value={amount}
               onChangeText={setAmount}
               keyboardType="numeric"
             />
+
+            <Text style={styles.inputLabel}>Preço Pago (em R$)</Text>
             <TextInput
               style={styles.input}
-              placeholder="Preço Pago (R$)"
+              placeholder="0.00"
               value={price}
               onChangeText={setPrice}
               keyboardType="numeric"
             />
 
-            <Button title="Salvar" onPress={handleAdd} />
-            <Button
-              title="Cancelar"
-              onPress={() => setModalVisible(false)}
-              color={colors.danger}
-            />
+            <View style={styles.modalButtons}>
+              <Button
+                title="Cancelar"
+                onPress={() => setModalVisible(false)}
+                color={colors.danger}
+              />
+              <View style={{ width: 10 }} />
+              <Button
+                title="Salvar Transação"
+                onPress={handleAdd}
+                color={colors.primary}
+              />
+            </View>
           </View>
         </View>
       </Modal>
@@ -150,35 +255,114 @@ export default function Wallet() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 20 },
+  container: { flex: 1, backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    padding: 20,
+    backgroundColor: colors.cardBackground,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
   },
-  title: { fontSize: 24, fontWeight: "bold", color: colors.textPrimary },
-  addButton: { backgroundColor: colors.primary, padding: 10, borderRadius: 25 },
+  headerTitle: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontFamily: "Roboto_700Bold",
+    textTransform: "uppercase",
+  },
+  totalBalanceLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginTop: 5,
+  },
+  totalBalanceValue: {
+    fontSize: 28,
+    color: colors.primary,
+    fontFamily: "Roboto_700Bold",
+  },
+
+  addButton: {
+    backgroundColor: colors.primary,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  chartContainer: {
+    backgroundColor: colors.cardBackground,
+    margin: 15,
+    borderRadius: 16,
+    padding: 10,
+    elevation: 2,
+    alignItems: "center",
+  },
+  chartTitle: {
+    fontSize: 16,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textSecondary,
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    marginLeft: 10,
+  },
+  emptyChart: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 200,
+    margin: 15,
+    backgroundColor: "rgba(0,0,0,0.02)",
+    borderRadius: 16,
+  },
+
+  sectionTitle: {
+    fontSize: 18,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textPrimary,
+    marginLeft: 20,
+    marginBottom: 10,
+    marginTop: 10,
+  },
+
   card: {
     backgroundColor: "#fff",
     padding: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     marginBottom: 10,
+    marginHorizontal: 20,
     elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  row: {
+  cardHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "center",
+    marginBottom: 12,
   },
-  coinTitle: { fontSize: 18, fontWeight: "bold" },
+  coinBadge: {
+    backgroundColor: colors.background,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  coinTitle: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   detailsRow: { flexDirection: "row", justifyContent: "space-between" },
-  label: { color: colors.textSecondary },
-  currentValue: { fontSize: 16, fontWeight: "bold" },
+  label: { color: colors.textSecondary, fontSize: 14, marginBottom: 2 },
+  currentValue: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
   emptyText: {
     textAlign: "center",
-    marginTop: 50,
+    marginTop: 20,
     color: colors.textSecondary,
+    fontFamily: "Roboto_400Regular",
   },
   modalContainer: {
     flex: 1,
@@ -186,18 +370,37 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     padding: 20,
   },
-  modalContent: { backgroundColor: "#fff", padding: 20, borderRadius: 10 },
+  modalContent: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 16,
+    elevation: 5,
+  },
   modalTitle: {
     fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
+    fontFamily: "Roboto_700Bold",
+    marginBottom: 20,
     textAlign: "center",
+    color: colors.textPrimary,
+  },
+  inputLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+    marginLeft: 4,
   },
   input: {
     borderWidth: 1,
     borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+    fontSize: 16,
+    backgroundColor: "#FAFAFA",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    marginTop: 10,
   },
 });
