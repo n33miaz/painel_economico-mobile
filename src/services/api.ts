@@ -1,23 +1,49 @@
 import axios from "axios";
-import { Platform } from "react-native";
-import { API_BASE_URL } from "@env";
+import Constants from "expo-constants";
 
-const DEV_URL =
-  Platform.OS === "web"
-    ? "http://localhost:8080/api"
-    : "http://10.201.3.1:8080/api";
+const getBaseUrl = () => {
+  if (process.env.API_BASE_URL) {
+    return process.env.API_BASE_URL;
+  }
+
+  const debuggerHost =
+    Constants.expoConfig?.hostUri || Constants.manifest?.debuggerHost;
+
+  if (debuggerHost) {
+    const ip = debuggerHost.split(":")[0];
+    return `http://${ip}:8080/api`;
+  }
+
+  return "http://localhost:8080/api";
+};
 
 const api = axios.create({
-  baseURL: API_BASE_URL || DEV_URL,
+  baseURL: getBaseUrl(),
+  timeout: 10000,
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === "ECONNABORTED") {
+      console.error(
+        "Erro: A conexão demorou muito. Verifique se o PC e o Celular estão na mesma rede."
+      );
+    } else if (error.message === "Network Error") {
+      console.error(
+        "Erro de Rede: O celular não consegue alcançar o backend. Verifique o Firewall do Windows."
+      );
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
 
 // --- Interfaces ---
-
 export interface Indicator {
   id: string;
-  type: "currency" | "index";
+  type: "currency" | "index" | "unknown";
   code: string;
   name: string;
   buy: number;
@@ -49,8 +75,6 @@ export interface ConversionResponse {
   result: number;
 }
 
-// --- Type Guards ---
-
 export function isCurrencyData(item: Indicator): boolean {
   return item.type === "currency";
 }
@@ -59,8 +83,6 @@ export function isIndexData(item: Indicator): boolean {
   return item.type === "index";
 }
 
-// --- Serviços ---
-
 export const getHistoricalData = async (
   currencyCode: string,
   days: number = 7
@@ -68,9 +90,7 @@ export const getHistoricalData = async (
   try {
     const response = await api.get<HistoricalDataPoint[]>(
       `/indicators/historical/${currencyCode}`,
-      {
-        params: { days },
-      }
+      { params: { days } }
     );
     return response.data;
   } catch (error) {

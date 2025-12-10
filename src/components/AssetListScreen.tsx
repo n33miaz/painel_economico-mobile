@@ -5,10 +5,11 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  Button,
   LayoutAnimation,
   RefreshControl,
+  StatusBar,
 } from "react-native";
+import Constants from "expo-constants";
 
 import { colors } from "../theme/colors";
 import { Indicator, isCurrencyData, isIndexData } from "../services/api";
@@ -22,12 +23,14 @@ interface AssetListScreenProps {
   data: Indicator[];
   emptyMessage: string;
   symbol?: string;
+  title?: string;
 }
 
 export default function AssetListScreen({
   data,
   emptyMessage,
   symbol,
+  title = "Mercado",
 }: AssetListScreenProps) {
   const { loading, error, fetchIndicators } = useIndicatorStore();
   const { favorites, toggleFavorite } = useFavoritesStore();
@@ -87,47 +90,46 @@ export default function AssetListScreen({
     [favorites, handleToggleFavorite, handleOpenModal, symbol]
   );
 
-  if (loading && data.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Atualizando mercado...</Text>
-      </View>
-    );
-  }
-
-  if (error && data.length === 0) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>Mercado indisponível no momento.</Text>
-        <Button title="Reconectar" onPress={onRefresh} color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={(item, index) => `${item.id}-${index}`}
-        renderItem={renderItem}
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        ListEmptyComponent={
-          !loading ? (
-            <View style={styles.centered}>
-              <Text style={styles.emptyText}>{emptyMessage}</Text>
-            </View>
-          ) : null
-        }
-        contentContainerStyle={{ paddingBottom: 20 }}
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={colors.primaryDark}
       />
+
+      <View style={styles.headerContainer}>
+        <Text style={styles.headerTitle}>{title}</Text>
+        <Text style={styles.headerSubtitle}>Cotações em tempo real</Text>
+      </View>
+
+      {loading && data.length === 0 ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Atualizando mercado...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id} 
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          ListEmptyComponent={
+            !loading ? (
+              <View style={styles.centered}>
+                <Text style={styles.emptyText}>{emptyMessage}</Text>
+              </View>
+            ) : null
+          }
+        />
+      )}
 
       {selectedItem && (
         <DetailsModal
@@ -176,6 +178,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  headerContainer: {
+    backgroundColor: colors.primaryDark,
+    paddingTop: Constants.statusBarHeight + 20,
+    paddingBottom: 30,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 10,
+    zIndex: 1,
+    marginBottom: -10,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontFamily: "Roboto_700Bold",
+    color: "#FFF",
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.8)",
+    fontFamily: "Roboto_400Regular",
+    marginTop: 4,
+  },
+  listContent: {
+    paddingTop: 20,
+    paddingBottom: 20,
+  },
   centered: {
     flex: 1,
     justifyContent: "center",
@@ -185,11 +217,6 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 10,
     color: colors.textSecondary,
-  },
-  errorText: {
-    color: colors.danger,
-    marginBottom: 10,
-    textAlign: "center",
   },
   emptyText: {
     color: colors.textSecondary,

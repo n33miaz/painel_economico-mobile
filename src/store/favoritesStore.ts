@@ -23,12 +23,16 @@ export const useFavoritesStore = create(
       },
 
       toggleFavorite: (id: string) => {
-        const isCurrentlyFavorite = get().isFavorite(id);
-
         const currentFavorites = get().favorites;
-        const newFavorites = isCurrentlyFavorite
-          ? currentFavorites.filter((favId) => favId !== id)
-          : [...currentFavorites, id];
+        const exists = currentFavorites.includes(id);
+
+        let newFavorites;
+
+        if (exists) {
+          newFavorites = currentFavorites.filter((favId) => favId !== id);
+        } else {
+          newFavorites = Array.from(new Set([...currentFavorites, id]));
+        }
 
         set({ favorites: newFavorites });
       },

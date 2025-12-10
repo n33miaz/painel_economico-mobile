@@ -10,6 +10,7 @@ export default function Currencies() {
       data={currencies}
       emptyMessage="Nenhuma moeda encontrada."
       symbol="R$"
+      title="Moedas"
     />
   );
 }

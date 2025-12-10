@@ -7,7 +7,6 @@ import {
   GestureResponderEvent,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-
 import { colors } from "../theme/colors";
 
 interface IndicatorCardProps {
@@ -37,12 +36,15 @@ const IndicatorCard: React.FC<IndicatorCardProps> = React.memo(
       return {
         color: isPositive ? colors.success : colors.danger,
         icon: (isPositive
-          ? "arrow-up"
-          : "arrow-down") as keyof typeof Ionicons.glyphMap,
+          ? "caret-up"
+          : "caret-down") as keyof typeof Ionicons.glyphMap,
+        bg: isPositive ? "rgba(0, 200, 83, 0.1)" : "rgba(255, 59, 48, 0.1)",
       };
     }, [variation]);
 
-    const displayName = useMemo(() => name.split("/")[0], [name]);
+    const displayName = useMemo(() => {
+      return name.split("/")[0].replace("Comercial", "").trim();
+    }, [name]);
 
     const handleFavoritePress = (e: GestureResponderEvent) => {
       e.stopPropagation();
@@ -50,37 +52,57 @@ const IndicatorCard: React.FC<IndicatorCardProps> = React.memo(
     };
 
     return (
-      <TouchableOpacity style={styles.card} onPress={onPress}>
-        <View style={styles.content}>
-          <Text style={styles.cardTitle}>{displayName}</Text>
-          <Text style={styles.cardValue}>
-            {symbol} {value.toFixed(2)}
-          </Text>
-        </View>
-        <View style={styles.actions}>
-          <View
-            style={[
-              styles.variationContainer,
-              { backgroundColor: variationStyle.color },
-            ]}
-          >
+      <TouchableOpacity
+        style={styles.card}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.headerRow}>
+          <View style={styles.iconContainer}>
             <Ionicons
-              name={variationStyle.icon}
-              size={16}
-              color={colors.textLight}
+              name="cash-outline"
+              size={20}
+              color={colors.primaryDark}
             />
-            <Text style={styles.variationText}>{variation.toFixed(2)}%</Text>
+          </View>
+          <View style={styles.titleContainer}>
+            <Text style={styles.cardTitle} numberOfLines={1}>
+              {displayName}
+            </Text>
+            <Text style={styles.cardSubtitle}>{symbol} - BRL</Text>
           </View>
           <TouchableOpacity
             onPress={handleFavoritePress}
-            style={styles.starButton}
+            style={styles.favoriteButton}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <Ionicons
               name={isFavorite ? "star" : "star-outline"}
-              size={28}
-              color={isFavorite ? colors.warning : colors.inactive}
+              size={22}
+              color={isFavorite ? colors.secondary : colors.inactive}
             />
           </TouchableOpacity>
+        </View>
+
+        <View style={styles.divider} />
+
+        <View style={styles.footerRow}>
+          <Text style={styles.cardValue}>
+            {symbol} {value.toFixed(2)}
+          </Text>
+
+          <View style={[styles.badge, { backgroundColor: variationStyle.bg }]}>
+            <Ionicons
+              name={variationStyle.icon}
+              size={12}
+              color={variationStyle.color}
+            />
+            <Text
+              style={[styles.variationText, { color: variationStyle.color }]}
+            >
+              {Math.abs(variation).toFixed(2)}%
+            </Text>
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -92,52 +114,73 @@ export default IndicatorCard;
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.cardBackground,
-    borderRadius: 12,
-    padding: 20,
-    marginVertical: 8,
+    borderRadius: 16,
+    padding: 16,
+    marginVertical: 6,
     marginHorizontal: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  content: {
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: "#EBF8FF", // Azul bem clarinho
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  titleContainer: {
     flex: 1,
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "Roboto_700Bold",
     color: colors.textPrimary,
   },
-  cardValue: {
-    fontSize: 22,
+  cardSubtitle: {
+    fontSize: 12,
     color: colors.textSecondary,
-    marginTop: 4,
     fontFamily: "Roboto_400Regular",
   },
-  actions: {
+  favoriteButton: {
+    padding: 4,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginBottom: 12,
+  },
+  footerRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
   },
-  variationContainer: {
+  cardValue: {
+    fontSize: 20,
+    fontFamily: "Roboto_700Bold",
+    color: colors.primaryDark,
+  },
+  badge: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
   },
   variationText: {
-    color: colors.textLight,
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: "Roboto_700Bold",
     marginLeft: 4,
-  },
-  starButton: {
-    marginLeft: 16,
-    padding: 4,
   },
 });
