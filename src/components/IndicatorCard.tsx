@@ -1,10 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   GestureResponderEvent,
+  Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
@@ -31,6 +32,8 @@ const IndicatorCard: React.FC<IndicatorCardProps> = React.memo(
     onToggleFavorite,
     symbol = "R$",
   }) => {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
     const variationStyle = useMemo(() => {
       const isPositive = variation >= 0;
       return {
@@ -51,60 +54,80 @@ const IndicatorCard: React.FC<IndicatorCardProps> = React.memo(
       onToggleFavorite(id);
     };
 
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.96,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+      }).start();
+    };
+
     return (
-      <TouchableOpacity
-        style={styles.card}
-        onPress={onPress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.headerRow}>
-          <View style={styles.iconContainer}>
-            <Ionicons
-              name="cash-outline"
-              size={20}
-              color={colors.primaryDark}
-            />
-          </View>
-          <View style={styles.titleContainer}>
-            <Text style={styles.cardTitle} numberOfLines={1}>
-              {displayName}
-            </Text>
-            <Text style={styles.cardSubtitle}>{symbol} - BRL</Text>
-          </View>
-          <TouchableOpacity
-            onPress={handleFavoritePress}
-            style={styles.favoriteButton}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons
-              name={isFavorite ? "star" : "star-outline"}
-              size={22}
-              color={isFavorite ? colors.secondary : colors.inactive}
-            />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.divider} />
-
-        <View style={styles.footerRow}>
-          <Text style={styles.cardValue}>
-            {symbol} {value.toFixed(2)}
-          </Text>
-
-          <View style={[styles.badge, { backgroundColor: variationStyle.bg }]}>
-            <Ionicons
-              name={variationStyle.icon}
-              size={12}
-              color={variationStyle.color}
-            />
-            <Text
-              style={[styles.variationText, { color: variationStyle.color }]}
+      <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+        <TouchableOpacity
+          style={styles.card}
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          activeOpacity={0.9}
+        >
+          <View style={styles.headerRow}>
+            <View style={styles.iconContainer}>
+              <Ionicons
+                name="cash-outline"
+                size={20}
+                color={colors.primaryDark}
+              />
+            </View>
+            <View style={styles.titleContainer}>
+              <Text style={styles.cardTitle} numberOfLines={1}>
+                {displayName}
+              </Text>
+              <Text style={styles.cardSubtitle}>{symbol} - BRL</Text>
+            </View>
+            <TouchableOpacity
+              onPress={handleFavoritePress}
+              style={styles.favoriteButton}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              {Math.abs(variation).toFixed(2)}%
-            </Text>
+              <Ionicons
+                name={isFavorite ? "star" : "star-outline"}
+                size={22}
+                color={isFavorite ? colors.secondary : colors.inactive}
+              />
+            </TouchableOpacity>
           </View>
-        </View>
-      </TouchableOpacity>
+
+          <View style={styles.divider} />
+
+          <View style={styles.footerRow}>
+            <Text style={styles.cardValue}>
+              {symbol} {value.toFixed(2)}
+            </Text>
+
+            <View
+              style={[styles.badge, { backgroundColor: variationStyle.bg }]}
+            >
+              <Ionicons
+                name={variationStyle.icon}
+                size={12}
+                color={variationStyle.color}
+              />
+              <Text
+                style={[styles.variationText, { color: variationStyle.color }]}
+              >
+                {Math.abs(variation).toFixed(2)}%
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
     );
   }
 );
@@ -119,7 +142,7 @@ const styles = StyleSheet.create({
     marginVertical: 6,
     marginHorizontal: 16,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 3,
@@ -135,7 +158,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#EBF8FF", // Azul bem clarinho
+    backgroundColor: "#EBF8FF",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,

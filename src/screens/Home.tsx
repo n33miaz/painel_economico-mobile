@@ -8,24 +8,24 @@ import {
   TouchableOpacity,
   Linking,
   RefreshControl,
-  StatusBar,
 } from "react-native";
-import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation, DrawerActions } from "@react-navigation/native";
 
 import { colors } from "../theme/colors";
 import useNewsData from "../hooks/useNewsData";
 import { Indicator, isCurrencyData } from "../services/api";
 import HighlightCard from "../components/HighlightCard";
 import { useIndicatorStore } from "../store/indicatorStore";
+import ScreenHeader from "../components/ScreenHeader";
 
-const HIGHLIGHT_ITEMS = ["USD", "EUR", "BTC"];
+const HIGHLIGHT_ITEMS = ["USD", "EUR", "JPY"];
 
-export default function Home({ navigation }: any) {
+export default function Home() {
+  const navigation = useNavigation();
   const {
     indicators,
     loading: indicatorsLoading,
-    error: indicatorsError,
     fetchIndicators,
   } = useIndicatorStore();
 
@@ -70,31 +70,14 @@ export default function Home({ navigation }: any) {
 
   return (
     <View style={styles.mainContainer}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.primaryDark}
+      <ScreenHeader
+        title={`${getGreeting()}, Investidor`}
+        subtitle="Confira o mercado hoje"
       />
-
-      <View style={styles.headerContainer}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity
-            style={styles.menuButton}
-            onPress={() => navigation.openDrawer()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="menu" size={28} color="#FFF" />
-          </TouchableOpacity>
-
-          <View style={styles.textContainer}>
-            <Text style={styles.greetingText}>{getGreeting()}, Investidor</Text>
-            <Text style={styles.welcomeText}>Confira o mercado hoje</Text>
-          </View>
-        </View>
-      </View>
 
       <ScrollView
         style={styles.scrollContainer}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -105,7 +88,6 @@ export default function Home({ navigation }: any) {
           />
         }
       >
-        {/* Seção de Destaques */}
         <View style={styles.highlightsSection}>
           {isContentLoading && highlights.length === 0 ? (
             <ActivityIndicator
@@ -141,7 +123,9 @@ export default function Home({ navigation }: any) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Giro de Notícias</Text>
-            <TouchableOpacity onPress={() => navigation.navigate("Notícias")}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Notícias" as never)}
+            >
               <Text style={styles.seeAll}>Ver tudo</Text>
             </TouchableOpacity>
           </View>
@@ -184,51 +168,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  headerContainer: {
-    backgroundColor: colors.primaryDark,
-    paddingTop: Constants.statusBarHeight + 10,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 10,
-    zIndex: 1,
-  },
-  headerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  menuButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  greetingText: {
-    color: "rgba(255,255,255,0.8)",
-    fontSize: 14,
-    fontFamily: "Roboto_400Regular",
-  },
-  welcomeText: {
-    color: "#FFF",
-    fontSize: 20,
-    fontFamily: "Roboto_700Bold",
-    marginTop: 2,
-  },
   scrollContainer: {
     flex: 1,
-    marginTop: -20,
-    zIndex: 2,
   },
   highlightsSection: {
     marginBottom: 24,

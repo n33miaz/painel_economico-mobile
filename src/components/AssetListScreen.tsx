@@ -7,9 +7,7 @@ import {
   ActivityIndicator,
   LayoutAnimation,
   RefreshControl,
-  StatusBar,
 } from "react-native";
-import Constants from "expo-constants";
 
 import { colors } from "../theme/colors";
 import { Indicator, isCurrencyData, isIndexData } from "../services/api";
@@ -18,6 +16,7 @@ import HistoricalChart from "./HistoricalChart";
 import DetailsModal from "./DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
+import ScreenHeader from "./ScreenHeader";
 
 interface AssetListScreenProps {
   data: Indicator[];
@@ -32,7 +31,7 @@ export default function AssetListScreen({
   symbol,
   title = "Mercado",
 }: AssetListScreenProps) {
-  const { loading, error, fetchIndicators } = useIndicatorStore();
+  const { loading, fetchIndicators } = useIndicatorStore();
   const { favorites, toggleFavorite } = useFavoritesStore();
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,15 +91,7 @@ export default function AssetListScreen({
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.primaryDark}
-      />
-
-      <View style={styles.headerContainer}>
-        <Text style={styles.headerTitle}>{title}</Text>
-        <Text style={styles.headerSubtitle}>Cotações em tempo real</Text>
-      </View>
+      <ScreenHeader title={title} subtitle="Cotações em tempo real" />
 
       {loading && data.length === 0 ? (
         <View style={styles.centered}>
@@ -110,7 +101,7 @@ export default function AssetListScreen({
       ) : (
         <FlatList
           data={data}
-          keyExtractor={(item) => item.id} 
+          keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
           refreshControl={
@@ -140,33 +131,53 @@ export default function AssetListScreen({
             isCurrencyData(selectedItem) ? selectedItem.code : undefined
           }
         >
-          <>
+          <View>
             {isCurrencyData(selectedItem) ? (
-              <>
-                <Text style={styles.modalText}>
-                  Compra: R$ {selectedItem.buy.toFixed(2)}
-                </Text>
-                <Text style={styles.modalText}>
-                  Venda:{" "}
-                  {selectedItem.sell
-                    ? `R$ ${selectedItem.sell.toFixed(2)}`
-                    : "N/A"}
-                </Text>
-              </>
+              <View style={styles.infoRow}>
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Compra</Text>
+                  <Text style={styles.infoValue}>
+                    R$ {selectedItem.buy.toFixed(2)}
+                  </Text>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.infoItem}>
+                  <Text style={styles.infoLabel}>Venda</Text>
+                  <Text style={styles.infoValue}>
+                    {selectedItem.sell
+                      ? `R$ ${selectedItem.sell.toFixed(2)}`
+                      : "N/A"}
+                  </Text>
+                </View>
+              </View>
             ) : (
               <Text style={styles.modalText}>
                 Pontos: {selectedItem.points?.toFixed(2)}
               </Text>
             )}
 
-            <Text style={styles.modalText}>
-              Variação: {selectedItem.variation.toFixed(2)}%
-            </Text>
+            <View style={styles.variationContainer}>
+              <Text style={styles.variationLabel}>Variação do Dia</Text>
+              <Text
+                style={[
+                  styles.variationValue,
+                  {
+                    color:
+                      selectedItem.variation >= 0
+                        ? colors.success
+                        : colors.danger,
+                  },
+                ]}
+              >
+                {selectedItem.variation > 0 ? "+" : ""}
+                {selectedItem.variation.toFixed(2)}%
+              </Text>
+            </View>
 
             {isCurrencyData(selectedItem) && (
               <HistoricalChart currencyCode={selectedItem.code} />
             )}
-          </>
+          </View>
         </DetailsModal>
       )}
     </View>
@@ -178,34 +189,8 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  headerContainer: {
-    backgroundColor: colors.primaryDark,
-    paddingTop: Constants.statusBarHeight + 20,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 10,
-    zIndex: 1,
-    marginBottom: -10,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: "Roboto_700Bold",
-    color: "#FFF",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    fontFamily: "Roboto_400Regular",
-    marginTop: 4,
-  },
   listContent: {
-    paddingTop: 20,
+    paddingTop: 10,
     paddingBottom: 20,
   },
   centered: {
@@ -223,10 +208,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   modalText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 10,
+    fontSize: 18,
+    color: colors.textPrimary,
     textAlign: "center",
-    fontFamily: "Roboto_400Regular",
+    fontFamily: "Roboto_700Bold",
+    marginBottom: 10,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    marginBottom: 20,
+    backgroundColor: colors.background,
+    padding: 16,
+    borderRadius: 12,
+  },
+  infoItem: {
+    alignItems: "center",
+  },
+  divider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
+  },
+  infoLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: 18,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textPrimary,
+  },
+  variationContainer: {
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  variationLabel: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    marginBottom: 4,
+  },
+  variationValue: {
+    fontSize: 24,
+    fontFamily: "Roboto_700Bold",
   },
 });

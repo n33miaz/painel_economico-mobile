@@ -5,19 +5,18 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  SafeAreaView,
   RefreshControl,
-  Button,
+  TouchableOpacity,
 } from "react-native";
 
 import { colors } from "../theme/colors";
 import NewsCard from "../components/NewsCard";
 import useNewsData from "../hooks/useNewsData";
 import { NewsArticle } from "../services/api";
+import ScreenHeader from "../components/ScreenHeader";
 
 export default function News() {
   const { articles, loading, error, fetchNews } = useNewsData();
-
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = useCallback(async () => {
@@ -31,62 +30,44 @@ export default function News() {
     []
   );
 
-  if (loading && !articles?.length) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Carregando notícias...</Text>
-      </View>
-    );
-  }
-
-  if (error && !articles?.length) {
-    return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{error}</Text>
-        <View style={styles.buttonContainer}>
-          <Button
-            title="Tentar Novamente"
-            onPress={fetchNews}
-            color={colors.primary}
-          />
-        </View>
-      </View>
-    );
-  }
-
   return (
-    <SafeAreaView style={styles.container}>
-      <FlatList
-        initialNumToRender={5}
-        windowSize={3}
-        maxToRenderPerBatch={5}
-        data={articles}
-        keyExtractor={(item, index) => `${item.url}-${index}`}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
-          />
-        }
-        renderItem={renderNewsCard}
-        ListHeaderComponent={
-          <Text style={styles.headerTitle}>Principais Notícias</Text>
-        }
-        ListEmptyComponent={
-          !loading ? (
+    <View style={styles.container}>
+      <ScreenHeader title="Notícias" subtitle="Fique por dentro do mercado" />
+
+      {loading && !articles?.length ? (
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Carregando notícias...</Text>
+        </View>
+      ) : error && !articles?.length ? (
+        <View style={styles.centered}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchNews}>
+            <Text style={styles.retryText}>Tentar Novamente</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <FlatList
+          data={articles}
+          keyExtractor={(item, index) => `${item.url}-${index}`}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+              tintColor={colors.primary}
+            />
+          }
+          renderItem={renderNewsCard}
+          contentContainerStyle={styles.listContent}
+          ListEmptyComponent={
             <View style={styles.centered}>
               <Text style={styles.emptyText}>Nenhuma notícia encontrada.</Text>
             </View>
-          ) : null
-        }
-        contentContainerStyle={
-          articles?.length === 0 ? styles.listContentEmpty : undefined
-        }
-      />
-    </SafeAreaView>
+          }
+        />
+      )}
+    </View>
   );
 }
 
@@ -95,24 +76,23 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  listContent: {
+    paddingTop: 10,
+    paddingBottom: 20,
+  },
   centered: {
     flex: 1,
     padding: 20,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: colors.background,
-  },
-  listContentEmpty: {
-    flexGrow: 1,
-    justifyContent: "center",
   },
   loadingText: {
-    marginTop: 10,
+    marginTop: 12,
     color: colors.textSecondary,
     fontFamily: "Roboto_400Regular",
   },
   errorText: {
-    color: colors.danger,
+    color: colors.textSecondary,
     fontSize: 16,
     textAlign: "center",
     marginBottom: 16,
@@ -123,14 +103,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Roboto_400Regular",
   },
-  headerTitle: {
-    fontSize: 32,
-    fontFamily: "Roboto_700Bold",
-    color: colors.textPrimary,
-    marginHorizontal: 16,
-    marginVertical: 20,
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  buttonContainer: {
-    marginTop: 10,
+  retryText: {
+    color: "#FFF",
+    fontFamily: "Roboto_700Bold",
   },
 });

@@ -8,9 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
-  StatusBar,
 } from "react-native";
-import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
@@ -20,9 +18,10 @@ import HistoricalChart from "../components/HistoricalChart";
 import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
+import ScreenHeader from "../components/ScreenHeader";
 
 export default function Favorites({ navigation }: any) {
-  const { indicators, loading, error, fetchIndicators } = useIndicatorStore();
+  const { indicators, loading, fetchIndicators } = useIndicatorStore();
   const { favorites, toggleFavorite } = useFavoritesStore();
 
   useEffect(() => {
@@ -81,28 +80,12 @@ export default function Favorites({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <StatusBar
-        barStyle="light-content"
-        backgroundColor={colors.primaryDark}
+      <ScreenHeader
+        title="Meus Favoritos"
+        subtitle={`${favoriteItems.length} ${
+          favoriteItems.length === 1 ? "ativo" : "ativos"
+        } acompanhados`}
       />
-
-      <View style={styles.headerContainer}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.headerTitle}>Meus Favoritos</Text>
-            <Text style={styles.headerSubtitle}>
-              {favoriteItems.length}{" "}
-              {favoriteItems.length === 1 ? "ativo" : "ativos"} acompanhados
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => navigation.navigate("Moedas")}
-          >
-            <Ionicons name="add" size={24} color={colors.primaryDark} />
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {loading && favoriteItems.length === 0 ? (
         <View style={styles.centered}>
@@ -158,7 +141,7 @@ export default function Favorites({ navigation }: any) {
             isCurrencyData(selectedItem) ? selectedItem.code : undefined
           }
         >
-          <>
+          <View>
             {isIndexData(selectedItem) && (
               <Text style={styles.modalText}>
                 Pontos: {(selectedItem.points || 0).toFixed(2)}
@@ -177,7 +160,7 @@ export default function Favorites({ navigation }: any) {
             {isCurrencyData(selectedItem) && (
               <HistoricalChart currencyCode={selectedItem.code} />
             )}
-          </>
+          </View>
         </DetailsModal>
       )}
     </View>
@@ -188,49 +171,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  headerContainer: {
-    backgroundColor: colors.primaryDark,
-    paddingTop: Constants.statusBarHeight + 20,
-    paddingBottom: 30,
-    paddingHorizontal: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 10,
-    zIndex: 1,
-  },
-  headerContent: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontFamily: "Roboto_700Bold",
-    color: "#FFF",
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.8)",
-    fontFamily: "Roboto_400Regular",
-    marginTop: 4,
-  },
-  addButton: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#FFF",
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
   },
   listContent: {
     paddingTop: 20,

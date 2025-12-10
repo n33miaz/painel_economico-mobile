@@ -1,17 +1,22 @@
 import React from "react";
 import {
-  createBottomTabNavigator,
-  BottomTabNavigationOptions,
-} from "@react-navigation/bottom-tabs";
-import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
   DrawerContentComponentProps,
+  DrawerItem,
 } from "@react-navigation/drawer";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
-import { View, Text, StyleSheet, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../theme/colors";
 
@@ -22,51 +27,69 @@ import News from "../screens/News";
 import About from "../screens/About";
 import Favorites from "../screens/Favorites";
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 const Drawer = createDrawerNavigator();
 
-const tabScreenOptions: BottomTabNavigationOptions = {
-  tabBarActiveTintColor: colors.primary,
-  tabBarInactiveTintColor: colors.inactive,
-  headerShown: false,
-  tabBarStyle: {
-    backgroundColor: "white",
-    borderTopWidth: 0,
-    elevation: 10,
-    height: 60,
-    paddingBottom: 8,
-    paddingTop: 8,
-  },
-  tabBarLabelStyle: {
-    fontFamily: "Roboto_700Bold",
-    fontSize: 10,
-  },
-};
-
 function TabNavigator() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <Tab.Navigator initialRouteName="Home" screenOptions={tabScreenOptions}>
+    <Tab.Navigator
+      initialRouteName="Dashboard"
+      tabBarPosition="bottom"
+      screenOptions={{
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.inactive,
+        tabBarIndicatorStyle: {
+          backgroundColor: colors.primary,
+          height: 3,
+          top: 0,
+        },
+        tabBarStyle: {
+          backgroundColor: "white",
+          height: 60 + (Platform.OS === "ios" ? insets.bottom : 0),
+          paddingBottom: Platform.OS === "ios" ? insets.bottom : 10,
+          elevation: 10,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        tabBarLabelStyle: {
+          fontFamily: "Roboto_700Bold",
+          fontSize: 10,
+          textTransform: "capitalize",
+        },
+        tabBarItemStyle: {
+          padding: 0,
+          justifyContent: "center",
+        },
+        swipeEnabled: true,
+        animationEnabled: true,
+      }}
+    >
       <Tab.Screen
-        name="Home"
-        component={Home}
+        name="Moedas"
+        component={Currencies}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons
-              name={focused ? "home" : "home-outline"}
-              size={size}
+              name={focused ? "cash" : "cash-outline"}
+              size={24}
               color={color}
             />
           ),
         }}
       />
       <Tab.Screen
-        name="Moedas"
-        component={Currencies}
+        name="Dashboard"
+        component={Home}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarLabel: "Dashboard",
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons
-              name={focused ? "cash" : "cash-outline"}
-              size={size}
+              name={focused ? "grid" : "grid-outline"}
+              size={24}
               color={color}
             />
           ),
@@ -76,10 +99,10 @@ function TabNavigator() {
         name="Índices"
         component={Indexes}
         options={{
-          tabBarIcon: ({ focused, color, size }) => (
+          tabBarIcon: ({ focused, color }) => (
             <Ionicons
               name={focused ? "stats-chart" : "stats-chart-outline"}
-              size={size}
+              size={24}
               color={color}
             />
           ),
@@ -90,13 +113,18 @@ function TabNavigator() {
 }
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={[styles.drawerContainer, { paddingTop: insets.top }]}>
       <View style={styles.drawerHeader}>
         <View style={styles.iconContainer}>
-          <Ionicons name="stats-chart" size={32} color={colors.primaryDark} />
+          <Ionicons name="infinite" size={32} color={colors.primaryDark} />
         </View>
-        <Text style={styles.appName}>Painel Econômico</Text>
+        <View>
+          <Text style={styles.appName}>Painel Econômico</Text>
+          <Text style={styles.appSlogan}>Soluções Inteligentes</Text>
+        </View>
       </View>
 
       <DrawerContentScrollView
@@ -106,8 +134,20 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
         <DrawerItemList {...props} />
       </DrawerContentScrollView>
 
-      <View style={styles.drawerFooter}>
-        <Text style={styles.footerText}>v1.0.0</Text>
+      <View
+        style={[styles.drawerFooter, { paddingBottom: 20 + insets.bottom }]}
+      >
+        <TouchableOpacity
+          style={styles.aboutButton}
+          onPress={() => props.navigation.navigate("Sobre")}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={24}
+            color={colors.textSecondary}
+          />
+          <Text style={styles.aboutText}>Sobre o App</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -125,13 +165,21 @@ function DrawerNavigator() {
         drawerInactiveTintColor: colors.textSecondary,
         drawerLabelStyle: {
           fontFamily: "Roboto_700Bold",
-          marginLeft: -20,
+          marginLeft: 0,
+        },
+        drawerItemStyle: {
+          borderRadius: 8,
+          marginHorizontal: 10,
+          marginVertical: 4,
         },
         drawerStyle: {
-          width: "75%",
-          backgroundColor: "white",
+          width: "70%",
+          backgroundColor: colors.background,
+          borderTopRightRadius: 24,
+          borderBottomRightRadius: 24,
         },
-        drawerType: "front",
+        drawerType: "slide",
+        overlayColor: "rgba(5, 61, 153, 0.2)",
       }}
     >
       <Drawer.Screen
@@ -139,16 +187,7 @@ function DrawerNavigator() {
         component={TabNavigator}
         options={{
           drawerIcon: ({ color }) => (
-            <Ionicons name="grid-outline" size={22} color={color} />
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="Favoritos"
-        component={Favorites}
-        options={{
-          drawerIcon: ({ color }) => (
-            <Ionicons name="star-outline" size={22} color={color} />
+            <Ionicons name="home-outline" size={22} color={color} />
           ),
         }}
       />
@@ -162,16 +201,19 @@ function DrawerNavigator() {
         }}
       />
       <Drawer.Screen
+        name="Favoritos"
+        component={Favorites}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons name="star-outline" size={22} color={color} />
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="Sobre"
         component={About}
         options={{
-          drawerIcon: ({ color }) => (
-            <Ionicons
-              name="information-circle-outline"
-              size={22}
-              color={color}
-            />
-          ),
+          drawerItemStyle: { display: "none" },
         }}
       />
     </Drawer.Navigator>
@@ -187,37 +229,54 @@ export default function Routes() {
 }
 
 const styles = StyleSheet.create({
+  drawerContainer: {
+    flex: 1,
+    backgroundColor: "white",
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: "hidden",
+  },
   drawerHeader: {
-    height: 160,
-    backgroundColor: colors.background,
-    justifyContent: "center",
-    alignItems: "center",
+    padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#E0E0E0",
+    borderBottomColor: colors.border,
+    flexDirection: "row",
+    alignItems: "center",
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    backgroundColor: "white",
-    borderRadius: 30,
+    width: 48,
+    height: 48,
+    backgroundColor: colors.background,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
-    elevation: 2,
+    marginRight: 12,
   },
   appName: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: "Roboto_700Bold",
     color: colors.primaryDark,
   },
-  drawerFooter: {
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#E0E0E0",
-    alignItems: "center",
-  },
-  footerText: {
-    color: colors.textSecondary,
+  appSlogan: {
     fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: "Roboto_400Regular",
+  },
+  drawerFooter: {
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 15,
+  },
+  aboutButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  aboutText: {
+    marginLeft: 12,
+    fontSize: 14,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textSecondary,
   },
 });
