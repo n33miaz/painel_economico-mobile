@@ -16,7 +16,7 @@ import HistoricalChart from "./HistoricalChart";
 import DetailsModal from "./DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
-import ScreenHeader from "./ScreenHeader";
+import PageContainer from "./PageContainer";
 
 interface AssetListScreenProps {
   data: Indicator[];
@@ -29,7 +29,6 @@ export default function AssetListScreen({
   data,
   emptyMessage,
   symbol,
-  title = "Mercado",
 }: AssetListScreenProps) {
   const { loading, fetchIndicators } = useIndicatorStore();
   const { favorites, toggleFavorite } = useFavoritesStore();
@@ -90,9 +89,7 @@ export default function AssetListScreen({
   );
 
   return (
-    <View style={styles.container}>
-      <ScreenHeader title={title} subtitle="Cotações em tempo real" />
-
+    <PageContainer>
       {loading && data.length === 0 ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -180,17 +177,13 @@ export default function AssetListScreen({
           </View>
         </DetailsModal>
       )}
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   listContent: {
-    paddingTop: 10,
+    paddingTop: 20,
     paddingBottom: 20,
   },
   centered: {

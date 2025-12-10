@@ -13,8 +13,8 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
+  Easing,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
 import { convertCurrency } from "../services/api";
@@ -40,25 +40,31 @@ export default function DetailsModal({
   const [conversionResult, setConversionResult] = useState<number | null>(null);
   const [loadingConversion, setLoadingConversion] = useState(false);
 
-  const slideAnim = useRef(new Animated.Value(height)).current;
   const [showModal, setShowModal] = useState(visible);
+
+  const slideAnim = useRef(new Animated.Value(height)).current;
 
   useEffect(() => {
     if (visible) {
       setShowModal(true);
       setConversionResult(null);
       setAmount("100");
+
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
-        bounciness: 5,
+        damping: 20,
+        stiffness: 90,
       }).start();
     } else {
       Animated.timing(slideAnim, {
         toValue: height,
-        duration: 250,
+        duration: 300,
         useNativeDriver: true,
-      }).start(() => setShowModal(false));
+        easing: Easing.out(Easing.cubic),
+      }).start(() => {
+        setShowModal(false);
+      });
     }
   }, [visible]);
 
@@ -80,6 +86,17 @@ export default function DetailsModal({
     setLoadingConversion(false);
   };
 
+  const handleBackdropPress = () => {
+    Animated.timing(slideAnim, {
+      toValue: height,
+      duration: 300,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.cubic),
+    }).start(() => {
+      onClose();
+    });
+  };
+
   if (!showModal) return null;
 
   return (
@@ -93,9 +110,18 @@ export default function DetailsModal({
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.overlay}
       >
-        {/* Fecha ao clicar fora */}
-        <TouchableWithoutFeedback onPress={onClose}>
-          <View style={styles.backdrop} />
+        <TouchableWithoutFeedback onPress={handleBackdropPress}>
+          <Animated.View
+            style={[
+              styles.backdrop,
+              {
+                opacity: slideAnim.interpolate({
+                  inputRange: [0, height],
+                  outputRange: [1, 0],
+                }),
+              },
+            ]}
+          />
         </TouchableWithoutFeedback>
 
         <Animated.View
@@ -105,12 +131,12 @@ export default function DetailsModal({
 
           <View style={styles.header}>
             <Text style={styles.modalTitle}>{title}</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={colors.textSecondary} />
-            </TouchableOpacity>
           </View>
 
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
             {children}
 
             {currencyCode && (
@@ -135,11 +161,14 @@ export default function DetailsModal({
                   style={styles.convertButton}
                   onPress={handleConvert}
                   disabled={loadingConversion}
+                  activeOpacity={0.8}
                 >
                   {loadingConversion ? (
                     <ActivityIndicator color="#FFF" />
                   ) : (
-                    <Text style={styles.convertButtonText}>Converter</Text>
+                    <Text style={styles.convertButtonText}>
+                      Converter Agora
+                    </Text>
                   )}
                 </TouchableOpacity>
 
@@ -167,58 +196,63 @@ const styles = StyleSheet.create({
   },
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.6)",
   },
   modalView: {
     backgroundColor: colors.cardBackground,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
+    borderTopLeftRadius: 28, 
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 30,
     maxHeight: "85%",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 10,
   },
   handleBar: {
-    width: 40,
-    height: 4,
+    width: 48,
+    height: 5,
     backgroundColor: "#E0E0E0",
-    borderRadius: 2,
+    borderRadius: 3,
     alignSelf: "center",
     marginBottom: 20,
+    marginTop: 8,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
+    justifyContent: "center",
+    marginBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F0F0F0",
+    paddingBottom: 16,
   },
   modalTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: "Roboto_700Bold",
     color: colors.textPrimary,
-    flex: 1,
-  },
-  closeButton: {
-    padding: 4,
+    textAlign: "center",
   },
   scrollContent: {
-    paddingBottom: 30,
+    paddingBottom: 20,
   },
   conversionContainer: {
     marginTop: 24,
-    backgroundColor: colors.background,
-    padding: 16,
-    borderRadius: 16,
+    backgroundColor: "#F8F9FA",
+    padding: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#EAEAEA",
   },
   conversionTitle: {
     fontSize: 14,
     fontFamily: "Roboto_700Bold",
     color: colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 16,
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   inputWrapper: {
     flexDirection: "row",
@@ -228,8 +262,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: 16,
-    height: 50,
-    marginBottom: 12,
+    height: 56,
+    marginBottom: 16,
   },
   currencyLabel: {
     fontSize: 16,
@@ -249,12 +283,12 @@ const styles = StyleSheet.create({
   convertButton: {
     backgroundColor: colors.primary,
     borderRadius: 12,
-    height: 50,
+    height: 56,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -266,7 +300,7 @@ const styles = StyleSheet.create({
   resultContainer: {
     marginTop: 16,
     alignItems: "center",
-    padding: 12,
+    padding: 16,
     backgroundColor: "#E8F5E9",
     borderRadius: 12,
     borderWidth: 1,
@@ -278,7 +312,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: 24,
+    fontSize: 26,
     fontFamily: "Roboto_700Bold",
     color: colors.success,
   },

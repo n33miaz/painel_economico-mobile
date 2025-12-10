@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   createDrawerNavigator,
   DrawerContentScrollView,
   DrawerItemList,
   DrawerContentComponentProps,
-  DrawerItem,
 } from "@react-navigation/drawer";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
@@ -26,89 +25,124 @@ import Indexes from "../screens/Indexes";
 import News from "../screens/News";
 import About from "../screens/About";
 import Favorites from "../screens/Favorites";
+import Wallet from "../screens/Wallet";
+
+import ScreenHeader from "../components/ScreenHeader";
 
 const Tab = createMaterialTopTabNavigator();
 const Drawer = createDrawerNavigator();
 
-function TabNavigator() {
+function MainTabScreen() {
   const insets = useSafeAreaInsets();
+  const [activeTab, setActiveTab] = useState("Dashboard");
+
+  let headerTitle = "Olá, Investidor";
+  let headerSubtitle = "Resumo do Mercado";
+
+  switch (activeTab) {
+    case "Moedas":
+      headerTitle = "Cotações";
+      headerSubtitle = "Moedas Globais";
+      break;
+    case "Dashboard":
+      headerTitle = "Olá, Investidor";
+      headerSubtitle = "Resumo do Mercado";
+      break;
+    case "Índices":
+      headerTitle = "Indicadores";
+      headerSubtitle = "Bolsas e Taxas";
+      break;
+  }
 
   return (
-    <Tab.Navigator
-      initialRouteName="Dashboard"
-      tabBarPosition="bottom"
-      screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.inactive,
-        tabBarIndicatorStyle: {
-          backgroundColor: colors.primary,
-          height: 3,
-          top: 0,
-        },
-        tabBarStyle: {
-          backgroundColor: "white",
-          height: 60 + (Platform.OS === "ios" ? insets.bottom : 0),
-          paddingBottom: Platform.OS === "ios" ? insets.bottom : 10,
-          elevation: 10,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        },
-        tabBarLabelStyle: {
-          fontFamily: "Roboto_700Bold",
-          fontSize: 10,
-          textTransform: "capitalize",
-        },
-        tabBarItemStyle: {
-          padding: 0,
-          justifyContent: "center",
-        },
-        swipeEnabled: true,
-        animationEnabled: true,
-      }}
-    >
-      <Tab.Screen
-        name="Moedas"
-        component={Currencies}
-        options={{
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              name={focused ? "cash" : "cash-outline"}
-              size={24}
-              color={color}
-            />
-          ),
+    <View style={{ flex: 1 }}>
+      <ScreenHeader title={headerTitle} subtitle={headerSubtitle} />
+
+      <Tab.Navigator
+        initialRouteName="Dashboard"
+        tabBarPosition="bottom"
+        screenOptions={{
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.inactive,
+          tabBarPressColor: "transparent",
+          tabBarIndicatorStyle: {
+            backgroundColor: colors.primary,
+            height: 2,
+            top: 0,
+          },
+          tabBarStyle: {
+            backgroundColor: "white",
+            height: 70 + (Platform.OS === "ios" ? insets.bottom : 0),
+            paddingBottom: Platform.OS === "ios" ? insets.bottom : 15,
+            borderTopWidth: 1,
+            borderTopColor: colors.border,
+            elevation: 0,
+            shadowOpacity: 0,
+          },
+          tabBarLabelStyle: {
+            fontFamily: "Roboto_700Bold",
+            fontSize: 11,
+            textTransform: "capitalize",
+            marginTop: 0,
+          },
+          tabBarItemStyle: {
+            marginBottom: -5,
+          },
+          swipeEnabled: true,
+          animationEnabled: true,
         }}
-      />
-      <Tab.Screen
-        name="Dashboard"
-        component={Home}
-        options={{
-          tabBarLabel: "Dashboard",
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              name={focused ? "grid" : "grid-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Índices"
-        component={Indexes}
-        options={{
-          tabBarIcon: ({ focused, color }) => (
-            <Ionicons
-              name={focused ? "stats-chart" : "stats-chart-outline"}
-              size={24}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tab.Navigator>
+      >
+        <Tab.Screen
+          name="Moedas"
+          component={Currencies}
+          listeners={{
+            focus: () => setActiveTab("Moedas"),
+          }}
+          options={{
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons
+                name={focused ? "cash" : "cash-outline"}
+                size={26}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Dashboard"
+          component={Home}
+          listeners={{
+            focus: () => setActiveTab("Dashboard"),
+          }}
+          options={{
+            tabBarLabel: "Início",
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons
+                name={focused ? "grid" : "grid-outline"}
+                size={26}
+                color={color}
+              />
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Índices"
+          component={Indexes}
+          listeners={{
+            focus: () => setActiveTab("Índices"),
+          }}
+          options={{
+            tabBarIcon: ({ focused, color }) => (
+              <Ionicons
+                name={focused ? "stats-chart" : "stats-chart-outline"}
+                size={26}
+                color={color}
+              />
+            ),
+          }}
+        />
+      </Tab.Navigator>
+    </View>
   );
 }
 
@@ -117,15 +151,19 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
   return (
     <View style={[styles.drawerContainer, { paddingTop: insets.top }]}>
-      <View style={styles.drawerHeader}>
+      <TouchableOpacity
+        style={styles.drawerHeader}
+        onPress={() => props.navigation.navigate("Sobre")}
+        activeOpacity={0.7}
+      >
         <View style={styles.iconContainer}>
-          <Ionicons name="infinite" size={32} color={colors.primaryDark} />
+          <Ionicons name="infinite" size={32} color={colors.primary} />
         </View>
         <View>
           <Text style={styles.appName}>Painel Econômico</Text>
           <Text style={styles.appSlogan}>Soluções Inteligentes</Text>
         </View>
-      </View>
+      </TouchableOpacity>
 
       <DrawerContentScrollView
         {...props}
@@ -160,7 +198,10 @@ function DrawerNavigator() {
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: false,
-        drawerActiveBackgroundColor: "rgba(0, 173, 239, 0.1)",
+        drawerType: "front",
+        swipeEnabled: true,
+        swipeEdgeWidth: 100,
+        drawerActiveBackgroundColor: "rgba(0, 173, 239, 0.08)",
         drawerActiveTintColor: colors.primaryDark,
         drawerInactiveTintColor: colors.textSecondary,
         drawerLabelStyle: {
@@ -173,24 +214,34 @@ function DrawerNavigator() {
           marginVertical: 4,
         },
         drawerStyle: {
-          width: "70%",
+          width: "78%",
           backgroundColor: colors.background,
-          borderTopRightRadius: 24,
-          borderBottomRightRadius: 24,
+          borderTopRightRadius: 0,
+          borderBottomRightRadius: 0,
         },
-        drawerType: "slide",
-        overlayColor: "rgba(5, 61, 153, 0.2)",
+        overlayColor: "rgba(5, 61, 153, 0.4)",
       }}
     >
       <Drawer.Screen
         name="Início"
-        component={TabNavigator}
+        component={MainTabScreen}
         options={{
           drawerIcon: ({ color }) => (
             <Ionicons name="home-outline" size={22} color={color} />
           ),
         }}
       />
+
+      <Drawer.Screen
+        name="Carteira"
+        component={Wallet}
+        options={{
+          drawerIcon: ({ color }) => (
+            <Ionicons name="wallet-outline" size={22} color={color} />
+          ),
+        }}
+      />
+
       <Drawer.Screen
         name="Notícias"
         component={News}
@@ -232,28 +283,32 @@ const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
     backgroundColor: "white",
-    borderTopRightRadius: 24,
-    borderBottomRightRadius: 24,
     overflow: "hidden",
   },
   drawerHeader: {
-    padding: 20,
+    padding: 24,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#F8F9FA",
   },
   iconContainer: {
     width: 48,
     height: 48,
-    backgroundColor: colors.background,
+    backgroundColor: "white",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    marginRight: 12,
+    marginRight: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   appName: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: "Roboto_700Bold",
     color: colors.primaryDark,
   },
@@ -267,6 +322,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
     paddingTop: 15,
+    backgroundColor: "#F8F9FA",
   },
   aboutButton: {
     flexDirection: "row",

@@ -19,6 +19,7 @@ import DetailsModal from "../components/DetailsModal";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
 import ScreenHeader from "../components/ScreenHeader";
+import PageContainer from "../components/PageContainer";
 
 export default function Favorites({ navigation }: any) {
   const { indicators, loading, fetchIndicators } = useIndicatorStore();
@@ -79,7 +80,7 @@ export default function Favorites({ navigation }: any) {
   );
 
   return (
-    <View style={styles.container}>
+    <PageContainer>
       <ScreenHeader
         title="Meus Favoritos"
         subtitle={`${favoriteItems.length} ${
@@ -122,7 +123,9 @@ export default function Favorites({ navigation }: any) {
                 </Text>
                 <TouchableOpacity
                   style={styles.ctaButton}
-                  onPress={() => navigation.navigate("Moedas")}
+                  onPress={() =>
+                    navigation.navigate("Início", { screen: "Moedas" })
+                  }
                 >
                   <Text style={styles.ctaButtonText}>Explorar Mercado</Text>
                 </TouchableOpacity>
@@ -163,15 +166,11 @@ export default function Favorites({ navigation }: any) {
           </View>
         </DetailsModal>
       )}
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   listContent: {
     paddingTop: 20,
     paddingBottom: 20,

@@ -10,14 +10,14 @@ import {
   RefreshControl,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, DrawerActions } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 import { colors } from "../theme/colors";
 import useNewsData from "../hooks/useNewsData";
 import { Indicator, isCurrencyData } from "../services/api";
 import HighlightCard from "../components/HighlightCard";
+import PageContainer from "../components/PageContainer";
 import { useIndicatorStore } from "../store/indicatorStore";
-import ScreenHeader from "../components/ScreenHeader";
 
 const HIGHLIGHT_ITEMS = ["USD", "EUR", "JPY"];
 
@@ -61,20 +61,8 @@ export default function Home() {
     await Promise.all([fetchIndicators(), fetchNews()]);
   }, [fetchIndicators, fetchNews]);
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Bom dia";
-    if (hour < 18) return "Boa tarde";
-    return "Boa noite";
-  };
-
   return (
-    <View style={styles.mainContainer}>
-      <ScreenHeader
-        title={`${getGreeting()}, Investidor`}
-        subtitle="Confira o mercado hoje"
-      />
-
+    <PageContainer>
       <ScrollView
         style={styles.scrollContainer}
         contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }}
@@ -159,15 +147,11 @@ export default function Home() {
               )}
         </View>
       </ScrollView>
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   scrollContainer: {
     flex: 1,
   },

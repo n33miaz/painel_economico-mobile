@@ -1,128 +1,223 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Linking,
-  SafeAreaView,
+  ScrollView,
+  Animated,
+  Dimensions,
 } from "react-native";
 import Constants from "expo-constants";
 import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
+import ScreenHeader from "../components/ScreenHeader";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/neemiasmanso/";
 const GITHUB_URL = "https://github.com/n33miaz";
 
+const { width } = Dimensions.get("window");
+
 export default function About() {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 8,
+        tension: 40,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
   const handleLinkPress = (url: string) => {
     Linking.openURL(url);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Ionicons name="stats-chart" size={80} color={colors.primary} />
-          <Text style={styles.title}>Painel Econômico</Text>
-          <Text style={styles.subtitle}>
-            Versão {Constants.expoConfig?.version}
-          </Text>
-        </View>
+    <View style={styles.container}>
+      <ScreenHeader title="Sobre o App" subtitle="Informações do Projeto" />
 
-        <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <Animated.View
+          style={[
+            styles.card,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
+          <View style={styles.logoContainer}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="infinite" size={50} color={colors.primary} />
+            </View>
+            <Text style={styles.appName}>Painel Econômico</Text>
+            <Text style={styles.version}>
+              v{Constants.expoConfig?.version || "1.0.0"}
+            </Text>
+          </View>
+
+          <View style={styles.divider} />
+
+          <Text style={styles.sectionTitle}>Projeto</Text>
           <Text style={styles.description}>
-            Aplicativo desenvolvido como parte de um projeto de estudos,
-            consumindo APIs públicas para exibir cotações e índices econômicos
-            em tempo real.
+            Focado em performance e experiência do usuário, utilizando React
+            Native com Expo no fronted e Java com Spring Boot no backend. O
+            sistema consome APIs públicas para fornecer dados financeiros em
+            tempo real, simulando um ambiente corporativo de alta fidelidade.
           </Text>
-          <Text style={styles.author}>
-            Desenvolvido por:{"\n"}
-            <Text style={styles.authorName}>Neemias Cormino Manso</Text>
-          </Text>
-        </View>
 
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.button, styles.linkedinButton]}
-            onPress={() => handleLinkPress(LINKEDIN_URL)}
-          >
-            <Ionicons name="logo-linkedin" size={24} color={colors.textLight} />
-            <Text style={styles.buttonText}>LinkedIn</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.button, styles.githubButton]}
-            onPress={() => handleLinkPress(GITHUB_URL)}
-          >
-            <Ionicons name="logo-github" size={24} color={colors.textLight} />
-            <Text style={styles.buttonText}>GitHub</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </SafeAreaView>
+          <Text style={styles.sectionTitle}>Desenvolvedor</Text>
+          <View style={styles.devContainer}>
+            <Ionicons
+              name="person-circle-outline"
+              size={40}
+              color={colors.textSecondary}
+            />
+            <View style={styles.devInfo}>
+              <Text style={styles.devName}>Neemias Cormino Manso</Text>
+              <Text style={styles.devRole}>FullStack Developer</Text>
+            </View>
+          </View>
+
+          <View style={styles.buttonGroup}>
+            <TouchableOpacity
+              style={[styles.button, styles.linkedinButton]}
+              onPress={() => handleLinkPress(LINKEDIN_URL)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-linkedin" size={20} color="#FFF" />
+              <Text style={styles.buttonText}>LinkedIn</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.button, styles.githubButton]}
+              onPress={() => handleLinkPress(GITHUB_URL)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="logo-github" size={20} color="#FFF" />
+              <Text style={styles.buttonText}>GitHub</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
+
+        <Text style={styles.footerText}>
+          © 2025 Painel Econômico. Todos os direitos reservados.
+        </Text>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  container: {
-    flex: 1,
-    justifyContent: "space-between",
-    alignItems: "center",
+  scrollContent: {
     padding: 20,
-  },
-  header: {
+    paddingBottom: 40,
     alignItems: "center",
-    marginTop: 40,
   },
-  title: {
-    fontSize: 28,
+  card: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 20,
+    padding: 24,
+    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  logoContainer: {
+    alignItems: "center",
+  },
+  iconCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(0, 173, 239, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  appName: {
+    fontSize: 22,
     fontFamily: "Roboto_700Bold",
-    color: colors.textPrimary,
-    marginVertical: 10,
-    textAlign: "center",
+    color: colors.primaryDark,
   },
-  subtitle: {
-    fontSize: 16,
+  version: {
+    fontSize: 14,
     color: colors.textSecondary,
     fontFamily: "Roboto_400Regular",
+    marginTop: 4,
   },
-  content: {
-    alignItems: "center",
-    marginHorizontal: 20,
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    width: "100%",
+    marginVertical: 20,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textPrimary,
+    marginBottom: 8,
   },
   description: {
-    fontSize: 16,
-    textAlign: "center",
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 22,
+    fontFamily: "Roboto_400Regular",
+    marginBottom: 20,
+    textAlign: "justify",
+  },
+  devContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.background,
+    padding: 12,
+    borderRadius: 12,
     marginBottom: 24,
-    color: colors.textSecondary,
-    fontFamily: "Roboto_400Regular",
   },
-  author: {
+  devInfo: {
+    marginLeft: 12,
+  },
+  devName: {
     fontSize: 16,
-    textAlign: "center",
-    color: colors.textSecondary,
-    fontFamily: "Roboto_400Regular",
-  },
-  authorName: {
     fontFamily: "Roboto_700Bold",
     color: colors.textPrimary,
   },
-  footer: {
-    width: "100%",
-    marginBottom: 20,
+  devRole: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontFamily: "Roboto_400Regular",
+  },
+  buttonGroup: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
   },
   button: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 12,
-    marginBottom: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    elevation: 2,
   },
   linkedinButton: {
     backgroundColor: colors.linkedinBlue,
@@ -131,9 +226,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.githubDark,
   },
   buttonText: {
-    color: colors.textLight,
-    fontSize: 18,
+    color: "#FFF",
+    fontSize: 14,
     fontFamily: "Roboto_700Bold",
-    marginLeft: 10,
+    marginLeft: 8,
+  },
+  footerText: {
+    marginTop: 24,
+    fontSize: 12,
+    color: colors.inactive,
+    textAlign: "center",
   },
 });

@@ -18,7 +18,7 @@ export const colors = {
   border: "#E2E8F0",
 
   shadow: "#053D99",
-  transparent: "rgba(0,0,0,0.5)",
+  overlay: "rgba(27, 29, 41, 0.6)",
 
   linkedinBlue: "#0A66C2",
   githubDark: "#24292F",

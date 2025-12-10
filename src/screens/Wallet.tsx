@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
-  Button,
   Alert,
   ScrollView,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  LayoutAnimation,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { PieChart } from "react-native-chart-kit";
@@ -18,16 +20,18 @@ import { PieChart } from "react-native-chart-kit";
 import { colors } from "../theme/colors";
 import { useWalletStore, Transaction } from "../store/walletStore";
 import { useIndicatorStore } from "../store/indicatorStore";
+import ScreenHeader from "../components/ScreenHeader";
+import PageContainer from "../components/PageContainer";
 
 const screenWidth = Dimensions.get("window").width;
 
 const CHART_COLORS = [
-  "#FF6384",
-  "#36A2EB",
-  "#FFCE56",
-  "#4BC0C0",
-  "#9966FF",
-  "#FF9F40",
+  "#00ADEF",
+  "#053D99",
+  "#FBBA00",
+  "#00C853",
+  "#6200EA",
+  "#FF3B30",
 ];
 
 export default function Wallet() {
@@ -64,7 +68,7 @@ export default function Wallet() {
       name: key,
       population: parseFloat(allocation[key].toFixed(2)),
       color: CHART_COLORS[index % CHART_COLORS.length],
-      legendFontColor: "#7F7F7F",
+      legendFontColor: colors.textSecondary,
       legendFontSize: 12,
     }));
 
@@ -73,15 +77,16 @@ export default function Wallet() {
 
   const handleAdd = () => {
     if (!amount || !price || !code) {
-      Alert.alert("Erro", "Preencha todos os campos");
+      Alert.alert("Atenção", "Preencha todos os campos para continuar.");
       return;
     }
 
     if (code.length !== 3) {
-      Alert.alert("Erro", "O código da moeda deve ter 3 letras (ex: USD)");
+      Alert.alert("Erro", "O código da moeda deve ter 3 letras (ex: USD).");
       return;
     }
 
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     addTransaction({
       currencyCode: code.toUpperCase(),
       amount: parseFloat(amount.replace(",", ".")),
@@ -94,122 +99,162 @@ export default function Wallet() {
     setCode("USD");
   };
 
+  const handleDelete = (id: string) => {
+    Alert.alert("Remover", "Deseja excluir esta transação?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: () => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+          removeTransaction(id);
+        },
+      },
+    ]);
+  };
+
   const renderItem = ({ item }: { item: Transaction }) => {
     const currentPrice = getCurrentPrice(item.currencyCode);
     const totalInvested = item.amount * item.priceAtPurchase;
     const currentValue = item.amount * currentPrice;
     const profit = currentValue - totalInvested;
-    const profitPercent =
-      totalInvested > 0 ? (profit / totalInvested) * 100 : 0;
     const isProfit = profit >= 0;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <View style={styles.coinBadge}>
-            <Text style={styles.coinTitle}>{item.currencyCode}</Text>
-          </View>
-          <TouchableOpacity onPress={() => removeTransaction(item.id)}>
-            <Ionicons name="trash-outline" size={20} color={colors.danger} />
-          </TouchableOpacity>
+      <View style={styles.transactionCard}>
+        <View style={styles.transactionIcon}>
+          <Text style={styles.transactionIconText}>{item.currencyCode}</Text>
         </View>
 
-        <View style={styles.detailsRow}>
-          <View>
-            <Text style={styles.label}>Quantidade: {item.amount}</Text>
-            <Text style={styles.label}>
-              Preço Médio: R$ {item.priceAtPurchase.toFixed(2)}
-            </Text>
-          </View>
-          <View style={{ alignItems: "flex-end" }}>
-            <Text style={styles.currentValue}>
-              R$ {currentValue.toFixed(2)}
-            </Text>
-            <Text
-              style={{
-                color: isProfit ? colors.success : colors.danger,
-                fontWeight: "bold",
-                fontSize: 12,
-              }}
-            >
-              {isProfit ? "+" : ""}
-              {profit.toFixed(2)} ({profitPercent.toFixed(1)}%)
-            </Text>
-          </View>
+        <View style={styles.transactionInfo}>
+          <Text style={styles.transactionTitle}>
+            {item.amount} {item.currencyCode}
+          </Text>
+          <Text style={styles.transactionSubtitle}>
+            Pago: R$ {item.priceAtPurchase.toFixed(2)}
+          </Text>
         </View>
+
+        <View style={styles.transactionValues}>
+          <Text style={styles.currentValueText}>
+            R$ {currentValue.toFixed(2)}
+          </Text>
+          <Text
+            style={[
+              styles.profitText,
+              { color: isProfit ? colors.success : colors.danger },
+            ]}
+          >
+            {isProfit ? "+" : ""}R$ {profit.toFixed(2)}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          onPress={() => handleDelete(item.id)}
+          style={styles.deleteButton}
+        >
+          <Ionicons name="trash-outline" size={18} color={colors.inactive} />
+        </TouchableOpacity>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Minha Carteira</Text>
-          <Text style={styles.totalBalanceLabel}>Saldo Estimado</Text>
-          <Text style={styles.totalBalanceValue}>
-            R$ {totalBalance.toFixed(2)}
-          </Text>
-        </View>
-        <TouchableOpacity
-          onPress={() => setModalVisible(true)}
-          style={styles.addButton}
-        >
-          <Ionicons name="add" size={30} color="#fff" />
-        </TouchableOpacity>
-      </View>
+    <PageContainer>
+      <ScreenHeader title="Minha Carteira" subtitle="Gestão de Ativos" />
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 80 }}>
-        {/* Gráfico de Alocação */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Card de Saldo Total */}
+        <View style={styles.balanceCard}>
+          <View>
+            <Text style={styles.balanceLabel}>Saldo Estimado</Text>
+            <Text style={styles.balanceValue}>
+              R$ {totalBalance.toFixed(2)}
+            </Text>
+          </View>
+          <View style={styles.balanceIcon}>
+            <Ionicons name="wallet" size={32} color="rgba(255,255,255,0.8)" />
+          </View>
+        </View>
+
+        {/* Gráfico */}
         {chartData.length > 0 ? (
           <View style={styles.chartContainer}>
-            <Text style={styles.chartTitle}>Alocação por Moeda</Text>
+            <Text style={styles.sectionTitle}>Alocação</Text>
             <PieChart
               data={chartData}
-              width={screenWidth - 40}
-              height={220}
+              width={screenWidth - 60}
+              height={200}
               chartConfig={{
                 color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
               }}
               accessor={"population"}
               backgroundColor={"transparent"}
-              paddingLeft={"15"}
+              paddingLeft={"0"}
               center={[10, 0]}
               absolute
+              hasLegend={true}
             />
           </View>
         ) : (
-          <View style={styles.emptyChart}>
-            <Ionicons name="pie-chart-outline" size={60} color="#ccc" />
+          <View style={styles.emptyState}>
+            <Ionicons
+              name="pie-chart-outline"
+              size={60}
+              color={colors.inactive}
+            />
             <Text style={styles.emptyText}>
-              Adicione ativos para ver o gráfico
+              Adicione ativos para visualizar sua alocação.
             </Text>
           </View>
         )}
 
-        <Text style={styles.sectionTitle}>Transações</Text>
+        <Text style={styles.sectionTitle}>Histórico de Transações</Text>
         <FlatList
           data={transactions}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           scrollEnabled={false}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
-              Nenhum investimento registrado.
+            <Text style={styles.emptyListText}>
+              Nenhuma transação registrada.
             </Text>
           }
         />
       </ScrollView>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalContainer}>
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+        activeOpacity={0.9}
+      >
+        <Ionicons name="add" size={30} color="#FFF" />
+      </TouchableOpacity>
+
+      {/* Modal de Adição */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Novo Investimento</Text>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Nova Transação</Text>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Ionicons name="close" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
+            </View>
 
             <Text style={styles.inputLabel}>Moeda (Código)</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ex: USD, EUR"
+              placeholder="Ex: USD"
               value={code}
               onChangeText={setCode}
               autoCapitalize="characters"
@@ -225,7 +270,7 @@ export default function Wallet() {
               keyboardType="numeric"
             />
 
-            <Text style={styles.inputLabel}>Preço Pago (em R$)</Text>
+            <Text style={styles.inputLabel}>Preço Pago (Unitário em R$)</Text>
             <TextInput
               style={styles.input}
               placeholder="0.00"
@@ -234,173 +279,209 @@ export default function Wallet() {
               keyboardType="numeric"
             />
 
-            <View style={styles.modalButtons}>
-              <Button
-                title="Cancelar"
-                onPress={() => setModalVisible(false)}
-                color={colors.danger}
-              />
-              <View style={{ width: 10 }} />
-              <Button
-                title="Salvar Transação"
-                onPress={handleAdd}
-                color={colors.primary}
-              />
-            </View>
+            <TouchableOpacity style={styles.saveButton} onPress={handleAdd}>
+              <Text style={styles.saveButtonText}>Salvar Investimento</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: {
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 100,
+  },
+  balanceCard: {
+    backgroundColor: colors.primaryDark,
+    borderRadius: 20,
+    padding: 24,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 20,
-    backgroundColor: colors.cardBackground,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    marginBottom: 24,
+    shadowColor: colors.primaryDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  headerTitle: {
+  balanceLabel: {
+    color: "rgba(255,255,255,0.8)",
     fontSize: 14,
-    color: colors.textSecondary,
-    fontFamily: "Roboto_700Bold",
-    textTransform: "uppercase",
+    fontFamily: "Roboto_400Regular",
+    marginBottom: 4,
   },
-  totalBalanceLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 5,
-  },
-  totalBalanceValue: {
-    fontSize: 28,
-    color: colors.primary,
+  balanceValue: {
+    color: "#FFF",
+    fontSize: 32,
     fontFamily: "Roboto_700Bold",
   },
-
-  addButton: {
-    backgroundColor: colors.primary,
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
+  balanceIcon: {
+    backgroundColor: "rgba(255,255,255,0.1)",
+    padding: 12,
+    borderRadius: 16,
+  },
+  chartContainer: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-
-  chartContainer: {
-    backgroundColor: colors.cardBackground,
-    margin: 15,
-    borderRadius: 16,
-    padding: 10,
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
     elevation: 2,
-    alignItems: "center",
   },
-  chartTitle: {
-    fontSize: 16,
-    fontFamily: "Roboto_700Bold",
-    color: colors.textSecondary,
-    marginBottom: 10,
-    alignSelf: "flex-start",
-    marginLeft: 10,
-  },
-  emptyChart: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: 200,
-    margin: 15,
-    backgroundColor: "rgba(0,0,0,0.02)",
-    borderRadius: 16,
-  },
-
   sectionTitle: {
     fontSize: 18,
     fontFamily: "Roboto_700Bold",
     color: colors.textPrimary,
-    marginLeft: 20,
-    marginBottom: 10,
-    marginTop: 10,
+    marginBottom: 16,
+    alignSelf: "flex-start",
   },
-
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
+  emptyState: {
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 40,
+    backgroundColor: "rgba(0,0,0,0.02)",
+    borderRadius: 16,
+    marginBottom: 24,
+  },
+  emptyText: {
+    color: colors.textSecondary,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  emptyListText: {
+    color: colors.textSecondary,
+    textAlign: "center",
+    marginTop: 20,
+    fontStyle: "italic",
+  },
+  transactionCard: {
+    backgroundColor: colors.cardBackground,
     borderRadius: 12,
-    marginBottom: 10,
-    marginHorizontal: 20,
-    elevation: 2,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: "row",
+    alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  cardHeader: {
+  transactionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#EBF8FF",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
+  transactionIconText: {
+    color: colors.primaryDark,
+    fontFamily: "Roboto_700Bold",
+    fontSize: 12,
+  },
+  transactionInfo: {
+    flex: 1,
+  },
+  transactionTitle: {
+    fontSize: 16,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textPrimary,
+  },
+  transactionSubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+  },
+  transactionValues: {
+    alignItems: "flex-end",
+    marginRight: 12,
+  },
+  currentValueText: {
+    fontSize: 14,
+    fontFamily: "Roboto_700Bold",
+    color: colors.textPrimary,
+  },
+  profitText: {
+    fontSize: 12,
+    fontFamily: "Roboto_700Bold",
+  },
+  deleteButton: {
+    padding: 8,
+  },
+  fab: {
+    position: "absolute",
+    bottom: 24,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.primary,
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: "#FFF",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
-  },
-  coinBadge: {
-    backgroundColor: colors.background,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  coinTitle: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
-  detailsRow: { flexDirection: "row", justifyContent: "space-between" },
-  label: { color: colors.textSecondary, fontSize: 14, marginBottom: 2 },
-  currentValue: { fontSize: 16, fontWeight: "bold", color: colors.textPrimary },
-  emptyText: {
-    textAlign: "center",
-    marginTop: 20,
-    color: colors.textSecondary,
-    fontFamily: "Roboto_400Regular",
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: "#fff",
-    padding: 20,
-    borderRadius: 16,
-    elevation: 5,
+    marginBottom: 24,
   },
   modalTitle: {
     fontSize: 20,
     fontFamily: "Roboto_700Bold",
-    marginBottom: 20,
-    textAlign: "center",
     color: colors.textPrimary,
   },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 14,
+    fontFamily: "Roboto_700Bold",
     color: colors.textSecondary,
-    marginBottom: 4,
-    marginLeft: 4,
+    marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    backgroundColor: "#F5F7FA",
+    borderRadius: 12,
+    padding: 16,
     fontSize: 16,
-    backgroundColor: "#FAFAFA",
+    color: colors.textPrimary,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  modalButtons: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    marginTop: 10,
+  saveButton: {
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  saveButtonText: {
+    color: "#FFF",
+    fontSize: 16,
+    fontFamily: "Roboto_700Bold",
   },
 });

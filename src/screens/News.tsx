@@ -14,6 +14,7 @@ import NewsCard from "../components/NewsCard";
 import useNewsData from "../hooks/useNewsData";
 import { NewsArticle } from "../services/api";
 import ScreenHeader from "../components/ScreenHeader";
+import PageContainer from "../components/PageContainer";
 
 export default function News() {
   const { articles, loading, error, fetchNews } = useNewsData();
@@ -31,7 +32,7 @@ export default function News() {
   );
 
   return (
-    <View style={styles.container}>
+    <PageContainer>
       <ScreenHeader title="Notícias" subtitle="Fique por dentro do mercado" />
 
       {loading && !articles?.length ? (
@@ -67,15 +68,11 @@ export default function News() {
           }
         />
       )}
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   listContent: {
     paddingTop: 10,
     paddingBottom: 20,

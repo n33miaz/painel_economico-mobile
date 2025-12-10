@@ -35,9 +35,10 @@ export const useIndicatorStore = create<IndicatorState>((set, get) => ({
   },
 
   getCurrencies: () => {
-    return get().indicators.filter(isCurrencyData);
+    return get()
+      .indicators.filter(isCurrencyData)
+      .filter((item) => !item.name.includes("Turismo"));
   },
-
   getIndexes: () => {
     return get().indicators.filter(isIndexData);
   },
