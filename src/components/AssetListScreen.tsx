@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -7,38 +7,55 @@ import {
   ActivityIndicator,
   LayoutAnimation,
   RefreshControl,
+  ScrollView,
 } from "react-native";
 
 import { colors } from "../theme/colors";
 import { Indicator, isCurrencyData, isIndexData } from "../services/api";
 import IndicatorCard from "./IndicatorCard";
-import HistoricalChart from "./HistoricalChart";
+import HighlightCard from "./HighlightCard";
 import DetailsModal from "./DetailsModal";
+import SearchBar from "./SearchBar";
+import PageContainer from "./PageContainer";
+import HistoricalChart from "./HistoricalChart";
 import { useFavoritesStore } from "../store/favoritesStore";
 import { useIndicatorStore } from "../store/indicatorStore";
-import PageContainer from "./PageContainer";
 
 interface AssetListScreenProps {
   data: Indicator[];
   emptyMessage: string;
   symbol?: string;
   title?: string;
+  featuredItems?: Indicator[];
 }
 
 export default function AssetListScreen({
   data,
   emptyMessage,
   symbol,
+  featuredItems = [],
 }: AssetListScreenProps) {
   const { loading, fetchIndicators } = useIndicatorStore();
   const { favorites, toggleFavorite } = useFavoritesStore();
 
+  const [searchText, setSearchText] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Indicator | null>(null);
 
   useEffect(() => {
     fetchIndicators();
   }, [fetchIndicators]);
+
+  const filteredData = useMemo(() => {
+    if (!searchText) return data;
+    const lowerSearch = searchText.toLowerCase();
+    return data.filter(
+      (item) =>
+        item.name.toLowerCase().includes(lowerSearch) ||
+        item.code.toLowerCase().includes(lowerSearch) ||
+        item.id.toLowerCase().includes(lowerSearch)
+    );
+  }, [data, searchText]);
 
   const onRefresh = useCallback(async () => {
     await fetchIndicators();
@@ -61,6 +78,42 @@ export default function AssetListScreen({
     setModalVisible(false);
     setSelectedItem(null);
   }, []);
+
+  const renderHeader = useMemo(() => {
+    if (searchText) return null;
+
+    return (
+      <View>
+        {featuredItems.length > 0 && (
+          <View style={styles.highlightsContainer}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.highlightsScroll}
+            >
+              {featuredItems.map((item) => (
+                <View
+                  key={`highlight-${item.id}`}
+                  style={styles.highlightWrapper}
+                >
+                  <HighlightCard
+                    title={item.code || item.name}
+                    value={item.points || item.buy}
+                    variation={item.variation}
+                    iconName={
+                      item.code === "BTC" || item.id.includes("BTC")
+                        ? "logo-bitcoin"
+                        : "stats-chart"
+                    }
+                  />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    );
+  }, [searchText, featuredItems]);
 
   const renderItem = useCallback(
     ({ item }: { item: Indicator }) => {
@@ -90,6 +143,15 @@ export default function AssetListScreen({
 
   return (
     <PageContainer>
+      <View style={styles.searchContainer}>
+        <SearchBar
+          placeholder="Buscar..."
+          value={searchText}
+          onChangeText={setSearchText}
+          onClear={() => setSearchText("")}
+        />
+      </View>
+
       {loading && data.length === 0 ? (
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -97,22 +159,29 @@ export default function AssetListScreen({
         </View>
       ) : (
         <FlatList
-          data={data}
+          data={filteredData}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContent}
+          ListHeaderComponent={renderHeader}
+          keyboardShouldPersistTaps="handled"
           refreshControl={
             <RefreshControl
               refreshing={loading}
               onRefresh={onRefresh}
               colors={[colors.primary]}
               tintColor={colors.primary}
+              progressViewOffset={10}
             />
           }
           ListEmptyComponent={
             !loading ? (
-              <View style={styles.centered}>
-                <Text style={styles.emptyText}>{emptyMessage}</Text>
+              <View style={styles.centeredEmpty}>
+                <Text style={styles.emptyText}>
+                  {searchText
+                    ? `Nenhum resultado para "${searchText}"`
+                    : emptyMessage}
+                </Text>
               </View>
             ) : null
           }
@@ -149,7 +218,7 @@ export default function AssetListScreen({
               </View>
             ) : (
               <Text style={styles.modalText}>
-                Pontos: {selectedItem.points?.toFixed(2)}
+                Pontos: {(selectedItem.points || 0).toFixed(2)}
               </Text>
             )}
 
@@ -182,15 +251,42 @@ export default function AssetListScreen({
 }
 
 const styles = StyleSheet.create({
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 2,
+    backgroundColor: colors.background,
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 4,
+  },
   listContent: {
-    paddingTop: 20,
-    paddingBottom: 20,
+    padding: 20,
+    paddingTop: 8,
+  },
+  highlightsContainer: {
+    marginBottom: 16,
+    marginTop: 8,
+  },
+  highlightsScroll: {
+    paddingHorizontal: 16, // Padding interno do ScrollView horizontal
+  },
+  highlightWrapper: {
+    width: 150,
+    marginRight: 0,
   },
   centered: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 20,
+  },
+  centeredEmpty: {
+    marginTop: 60,
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 10,
@@ -199,6 +295,7 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.textSecondary,
     fontSize: 16,
+    textAlign: "center",
   },
   modalText: {
     fontSize: 18,
