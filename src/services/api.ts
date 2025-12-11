@@ -14,7 +14,7 @@ const getBaseUrl = () => {
     return `http://${ip}:8080/api`;
   }
 
-  return "http://localhost:8080/api";
+  return "https://level-belinda-neemias-8be5fba4.koyeb.app/api";
 };
 
 const api = axios.create({

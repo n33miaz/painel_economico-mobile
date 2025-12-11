@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/logo-splash.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/logo-splash.png",
       "resizeMode": "contain",
@@ -16,15 +16,30 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.n33miaz.paineleconomicobr",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-splash.png",
         "backgroundColor": "#053D99"
-      },
-      "edgeToEdgeEnabled": true
+      }
     },
     "web": {
       "favicon": "./assets/logo-splash.png"
     },
-    "plugins": ["expo-font"]
+    "plugins": [
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.9.25"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2da28fc9-882c-45c7-bd08-c0aff25c516a"
+      }
+    }
   }
 }
