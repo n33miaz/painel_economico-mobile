@@ -15,6 +15,7 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { colors } from "../theme/colors";
 import ScreenHeader from "../components/ScreenHeader";
+import PageContainer from "../components/PageContainer";
 
 const LINKEDIN_URL = "https://www.linkedin.com/in/neemiasmanso/";
 const GITHUB_URL = "https://github.com/n33miaz";
@@ -46,7 +47,7 @@ export default function About() {
   };
 
   return (
-    <View style={styles.container}>
+    <PageContainer>
       <ScreenHeader title="Sobre o App" subtitle="Informações do Projeto" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -120,15 +121,11 @@ export default function About() {
           © 2025 Painel Econômico. Todos os direitos reservados.
         </Text>
       </ScrollView>
-    </View>
+    </PageContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
   scrollContent: {
     padding: 20,
     paddingBottom: 40,

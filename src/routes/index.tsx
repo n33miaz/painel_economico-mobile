@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { colors } from "../theme/colors";
 
+// Importação das Telas
 import Home from "../screens/Home";
 import Currencies from "../screens/Currencies";
 import Indexes from "../screens/Indexes";
@@ -56,7 +57,7 @@ function MainTabScreen() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
       <ScreenHeader title={headerTitle} subtitle={headerSubtitle} />
 
       <Tab.Navigator
@@ -65,29 +66,34 @@ function MainTabScreen() {
         screenOptions={{
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.inactive,
-          tabBarPressColor: "transparent",
+          tabBarPressColor: "transparent", // Remove o ripple effect nativo feio
           tabBarIndicatorStyle: {
             backgroundColor: colors.primary,
-            height: 2,
+            height: 3, // Ligeiramente mais grosso
+            borderTopLeftRadius: 3,
+            borderTopRightRadius: 3,
             top: 0,
           },
           tabBarStyle: {
             backgroundColor: "white",
             height: 70 + (Platform.OS === "ios" ? insets.bottom : 0),
-            paddingBottom: Platform.OS === "ios" ? insets.bottom : 15,
+            paddingBottom: Platform.OS === "ios" ? insets.bottom : 10,
             borderTopWidth: 1,
             borderTopColor: colors.border,
-            elevation: 0,
-            shadowOpacity: 0,
+            elevation: 8, // Sombra suave no Android
+            shadowColor: "#000", // Sombra no iOS
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
           },
           tabBarLabelStyle: {
             fontFamily: "Roboto_700Bold",
             fontSize: 11,
             textTransform: "capitalize",
-            marginTop: 0,
+            marginTop: 2,
           },
           tabBarItemStyle: {
-            marginBottom: -5,
+            marginBottom: -2,
           },
           swipeEnabled: true,
           animationEnabled: true,
@@ -96,9 +102,7 @@ function MainTabScreen() {
         <Tab.Screen
           name="Moedas"
           component={Currencies}
-          listeners={{
-            focus: () => setActiveTab("Moedas"),
-          }}
+          listeners={{ focus: () => setActiveTab("Moedas") }}
           options={{
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
@@ -112,11 +116,9 @@ function MainTabScreen() {
         <Tab.Screen
           name="Dashboard"
           component={Home}
-          listeners={{
-            focus: () => setActiveTab("Dashboard"),
-          }}
+          listeners={{ focus: () => setActiveTab("Dashboard") }}
           options={{
-            tabBarLabel: "Dashboard",
+            tabBarLabel: "Início",
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
                 name={focused ? "grid" : "grid-outline"}
@@ -129,9 +131,7 @@ function MainTabScreen() {
         <Tab.Screen
           name="Índices"
           component={Indexes}
-          listeners={{
-            focus: () => setActiveTab("Índices"),
-          }}
+          listeners={{ focus: () => setActiveTab("Índices") }}
           options={{
             tabBarIcon: ({ focused, color }) => (
               <Ionicons
@@ -161,7 +161,7 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
           source={require("../../assets/logo.png")}
           style={styles.drawerLogo}
           resizeMode="contain"
-        />{" "}
+        />
         <View>
           <Text style={styles.appName}>Painel Econômico</Text>
           <Text style={styles.appSlogan}>Soluções Inteligentes</Text>
@@ -218,9 +218,7 @@ function DrawerNavigator() {
         },
         drawerStyle: {
           width: "78%",
-          backgroundColor: colors.background,
-          borderTopRightRadius: 0,
-          borderBottomRightRadius: 0,
+          backgroundColor: "#FFF",
         },
         overlayColor: "rgba(5, 61, 153, 0.4)",
       }}
@@ -234,7 +232,6 @@ function DrawerNavigator() {
           ),
         }}
       />
-
       <Drawer.Screen
         name="Carteira"
         component={Wallet}
@@ -244,7 +241,6 @@ function DrawerNavigator() {
           ),
         }}
       />
-
       <Drawer.Screen
         name="Notícias"
         component={News}
@@ -286,7 +282,6 @@ const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
     backgroundColor: "white",
-    overflow: "hidden",
   },
   drawerHeader: {
     padding: 24,
@@ -301,7 +296,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 12,
     marginRight: 16,
-    backgroundColor: "white",
+    backgroundColor: "#EEE",
   },
   appName: {
     fontSize: 18,

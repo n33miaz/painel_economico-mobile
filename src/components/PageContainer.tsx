@@ -1,5 +1,11 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, StyleSheet, ViewStyle, StyleProp } from "react-native";
+import React, { useEffect } from "react";
+import { StyleSheet, ViewStyle, StyleProp, View } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSpring,
+} from "react-native-reanimated";
 import { colors } from "../theme/colors";
 
 interface PageContainerProps {
@@ -8,42 +14,39 @@ interface PageContainerProps {
 }
 
 export default function PageContainer({ children, style }: PageContainerProps) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        friction: 8,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    opacity.value = withTiming(1, { duration: 500 });
+
+    translateY.value = withSpring(0, {
+      damping: 20,
+      stiffness: 90,
+      mass: 1,
+    });
   }, []);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        style,
-        {
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }],
-        },
-      ]}
-    >
-      {children}
-    </Animated.View>
+    <View style={styles.staticWrapper}>
+      <Animated.View style={[styles.container, style, animatedStyle]}>
+        {children}
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  staticWrapper: {
+    flex: 1,
+    backgroundColor: colors.background,
+    overflow: "hidden",
+  },
   container: {
     flex: 1,
     backgroundColor: colors.background,

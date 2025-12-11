@@ -254,7 +254,6 @@ const styles = StyleSheet.create({
   searchContainer: {
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 2,
     backgroundColor: colors.background,
     zIndex: 10,
     shadowColor: "#000",
@@ -272,7 +271,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   highlightsScroll: {
-    paddingHorizontal: 16, // Padding interno do ScrollView horizontal
+    paddingHorizontal: 16,
   },
   highlightWrapper: {
     width: 150,

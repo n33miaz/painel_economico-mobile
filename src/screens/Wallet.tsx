@@ -164,7 +164,6 @@ export default function Wallet() {
       <ScreenHeader title="Minha Carteira" subtitle="Gestão de Ativos" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Card de Saldo Total */}
         <View style={styles.balanceCard}>
           <View>
             <Text style={styles.balanceLabel}>Saldo Estimado</Text>
@@ -177,7 +176,6 @@ export default function Wallet() {
           </View>
         </View>
 
-        {/* Gráfico */}
         {chartData.length > 0 ? (
           <View style={styles.chartContainer}>
             <Text style={styles.sectionTitle}>Alocação</Text>
@@ -223,7 +221,6 @@ export default function Wallet() {
         />
       </ScrollView>
 
-      {/* Floating Action Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => setModalVisible(true)}
@@ -232,7 +229,6 @@ export default function Wallet() {
         <Ionicons name="add" size={30} color="#FFF" />
       </TouchableOpacity>
 
-      {/* Modal de Adição */}
       <Modal
         visible={modalVisible}
         animationType="slide"
